@@ -54,24 +54,61 @@ function make_shot()
 	local shot = {}
 	shot.x = x+x_offset()
 	shot.y = y+4
-	shot.dx = max(dx + 5, 3)
+	shot.dx = max(abs(dx) + 5, 3)
+	if (dx < 0) then
+		shot.dx *= -1
+	end
 	shot.length = 5 + rnd(5)
 	add(shots,shot)
 end
 
 function draw_shots()
 	for shot in all(shots) do
-		line(shot.x, shot.y, shot.x+shot.length, shot.y, 12)
+		line(shot.x, shot.y, shot.x+shot.length, shot.y, 10)
 	end
 end
 
 function update_shots()
 	for shot in all(shots) do
 		shot.x += shot.dx
+		-- TODO: Delete shots when they are off the left side
 		if (shot.x > x + 128) then
 			del(shots,shot)
 		end
 	end
+end
+
+cam = {}
+cam.x = start_x
+cam.y = start_y
+cam.dx = 1
+function update_cam()
+	local desired_x = x - start_x
+	if (dx < 0) then
+		desired_x = x - screen_width + start_x
+	end
+
+	local diff = cam.x - desired_x
+
+	if (abs(diff) < 5) then
+		cam.x = desired_x
+	elseif (diff < 0) then
+		cam.x += cam.dx
+	else
+		cam.x -= cam.dx
+	end
+
+	if (cam.x != desired_x) then
+		cam.dx = min(cam.dx + 1, 4)
+	else
+		cam.dx = 1
+	end
+
+	cam.y = y-start_y
+end
+
+function set_cam()
+	camera(cam.x, cam.y)
 end
 
 function _update60()
@@ -156,20 +193,16 @@ function _update60()
 
 	update_stars()
 	update_shots()
-end
-
-function set_camera(p)
-	local parallax = p or 1
-	camera(x-start_x / parallax, y-start_y)
+	update_cam()
 end
 
 function x_offset()
-	return flr(dx / 0.5)
+	return flr(dx * 2)
 end
 
 function _draw()
 	cls(0)
-	set_camera(1)
+	set_cam()
 	draw_stars()
 	draw_shots()
 	local offset = x_offset()
