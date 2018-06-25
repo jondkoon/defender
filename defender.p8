@@ -1,16 +1,16 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
-start_x = 20
+start_x = 10
 start_y = 60
 x = start_x
 y = start_y
 dy = 0.5
 start_dx = 0.5
 dx = start_dx
-max_dx = 2
+max_dx = 3
 ddy = 0.15
-ddx = 0.8
+ddx = 0.4
 decel = 0.5
 s = {}
 s.ship = 1
@@ -18,7 +18,9 @@ s.tail_blast_counter = 0
 screen_width = 128
 screen_height = 128
 ship_height = 8
-max_y = screen_height - ship_height
+screen_vertical_margin = screen_height / 2
+max_y = screen_height + screen_vertical_margin
+min_y = -screen_vertical_margin
 
 stars = {}
 for i = 0, 50 + rnd(50) do
@@ -30,14 +32,14 @@ for i = 0, 50 + rnd(50) do
 end
 
 function update_stars()
-	local window_start = x - 20
-	local window_end = window_start + 128
+	local x_start = cam.x
+	local x_end = x_start + 128
 	for s in all(stars) do
-		if (s.x < window_start - 56) then
-			s.x = window_end + rnd(56)
+		if (s.x < x_start - 56) then
+			s.x = x_end + rnd(56)
 			s.y = -start_y + rnd(128 + (start_y * 2))
-		elseif (s.x > window_end + 56) then
-			s.x = window_start - rnd(56)
+		elseif (s.x > x_end + 56) then
+			s.x = x_start - rnd(56)
 			s.y = -start_y + rnd(128 + (start_y * 2))
 		end
 	end	
@@ -45,7 +47,7 @@ end
 
 function draw_stars()
 	for s in all(stars) do
-		line(s.x, s.y, s.x+dx, s.y, 7)
+		line(s.x, s.y, s.x + min(2, dx), s.y, 7)
 	end
 end
 
@@ -85,12 +87,12 @@ cam.dx = 1
 function update_cam()
 	local desired_x = x - start_x
 	if (dx < 0) then
-		desired_x = x - screen_width + start_x
+		desired_x = x - screen_width + (start_x * 2)
 	end
 
 	local diff = cam.x - desired_x
 
-	if (abs(diff) < 5) then
+	if (abs(diff) <= abs(dx)) then
 		cam.x = desired_x
 	elseif (diff < 0) then
 		cam.x += cam.dx
@@ -99,12 +101,20 @@ function update_cam()
 	end
 
 	if (cam.x != desired_x) then
-		cam.dx = min(cam.dx + 1, 4)
+		cam.dx = min(cam.dx + 1, abs(dx) + 2)
 	else
 		cam.dx = 1
 	end
 
-	cam.y = y-start_y
+	desired_y = y-start_y
+	if (desired_y < min_y) then
+		cam.y = min_y
+	elseif(desired_y > max_y - screen_height) then
+		cam.y = max_y - screen_height
+	else
+		cam.y = desired_y
+	end
+
 end
 
 function set_cam()
@@ -137,12 +147,12 @@ function _update60()
 	y += dy
 	x += dx
 	
-	if (y > max_y) then
-		dy = -1
-		y = max_y
-	elseif (y < 0) then
-		dy = 1
-		y = 0
+	if (y > max_y - ship_height) then
+		dy = max(-3, dy * -1)
+		y = max_y - ship_height
+	elseif (y < min_y) then
+		dy = min(3, dy * -1)
+		y = min_y
 	end
 	
 	if (dy <= -1.5) then
@@ -201,7 +211,7 @@ function x_offset()
 end
 
 function _draw()
-	cls(0)
+	cls(1)
 	set_cam()
 	draw_stars()
 	draw_shots()
