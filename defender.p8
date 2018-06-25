@@ -42,7 +42,7 @@ function update_stars()
 			s.x = x_start - rnd(56)
 			s.y = -start_y + rnd(128 + (start_y * 2))
 		end
-	end	
+	end
 end
 
 function draw_stars()
@@ -72,11 +72,10 @@ end
 
 function update_shots()
 	for shot in all(shots) do
-		shot.x += shot.dx
-		-- TODO: Delete shots when they are off the left side
-		if (shot.x > x + 128) then
+		if ((shot.x > cam.x + screen_width) or (shot.x < cam.x)) then
 			del(shots,shot)
 		end
+		shot.x += shot.dx
 	end
 end
 
@@ -190,7 +189,7 @@ function _update60()
 		s.tail = nil
 	end
 
-	if (btn(4)) then
+	if (btn(🅾️)) then
 		if (shot_delay == 0) then
 			shot_delay = 8
 			make_shot()
