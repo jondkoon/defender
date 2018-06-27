@@ -16,20 +16,17 @@ s = {}
 s.ship = 1
 s.tail_blast_counter = 0
 screen_width = 128
+half_screen_width = screen_width / 2
 screen_height = 128
 ship_height = 7
 screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-function random_choice(choices)
-	return choices[1+flr(rnd(count(choices)))]
-end
-
 stars = {}
 for i = 0, 50 + rnd(50) do
 	local s = { 
-		x = -56 + rnd(screen_width * 2),
+		x = -half_screen_width + rnd(screen_width * 2),
 		y = -start_y + rnd(screen_width + (start_y * 2))
 	}
 	add(stars, s)
@@ -39,11 +36,11 @@ function update_stars()
 	local x_start = cam.x
 	local x_end = x_start + screen_width
 	for s in all(stars) do
-		if (s.x < x_start - 56) then
-			s.x = x_end + rnd(56)
+		if (s.x < x_start - half_screen_width) then
+			s.x = x_end + rnd(half_screen_width)
 			s.y = -start_y + rnd(screen_width + (start_y * 2))
-		elseif (s.x > x_end + 56) then
-			s.x = x_start - rnd(56)
+		elseif (s.x > x_end + half_screen_width) then
+			s.x = x_start - rnd(half_screen_width)
 			s.y = -start_y + rnd(screen_width + (start_y * 2))
 		end
 	end
@@ -56,10 +53,10 @@ function draw_stars()
 end
 
 shots = {}
-function make_shot()
+function make_shot(x,y,dx)
 	local shot = {}
-	shot.x = x+x_offset()
-	shot.y = y+3
+	shot.x = x
+	shot.y = y
 	shot.dx = max(abs(dx) + 5, 3)
 	if (dx < 0) then
 		shot.dx *= -1
@@ -68,11 +65,9 @@ function make_shot()
 	add(shots,shot)
 end
 
-shot_colors = {10, 11, 12, 8}
-shot_color = random_choice(shot_colors)
 function draw_shots()
 	for shot in all(shots) do
-		line(shot.x, shot.y, shot.x+shot.length, shot.y, shot_color)
+		line(shot.x, shot.y, shot.x+shot.length, shot.y, 10)
 	end
 end
 
@@ -198,7 +193,7 @@ function _update60()
 	if (btn(🅾️)) then
 		if (shot_delay == 0) then
 			shot_delay = 8
-			make_shot()
+			make_shot(x+x_offset(), y+3, dx)
 		else
 			shot_delay -= 1
 		end
@@ -215,19 +210,6 @@ function x_offset()
 	return flr(dx * 2)
 end
 
-dark_colors = {2,3,5}
-function random_dark_color()
-	return random_choice(dark_colors)
-end
-
-light_colors = {11,12,13}
-function random_light_color()
-	return random_choice(light_colors)
-end
-
-dark_color = random_dark_color()
-light_color = random_light_color()
-
 function draw_ship()
 	local offset = x_offset()
 	if (s.tail) then
@@ -237,11 +219,7 @@ function draw_ship()
 		end
 		spr(s.tail, x+offset+tail_offset, y)
 	end
-	pal(7,8)
-	pal(5,dark_color)
-	pal(6,light_color)
 	spr(s.ship, x+offset, y)
-	pal()
 end
 
 function _draw()
