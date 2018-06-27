@@ -8,10 +8,11 @@ screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-s = {}
-s.ship = 1
-s.tail_blast_counter = 0
-start_x = screen_width / 4
+ship = {}
+ship.sprite = 1
+ship.tail_sprite = nil
+ship.tail_blast_counter = 0
+start_x = flr(screen_width / 5)
 start_y = 60
 x = start_x
 y = start_y
@@ -29,30 +30,30 @@ ship_width = 8
 
 stars = {}
 for i = 0, 50 + rnd(50) do
-	local s = { 
+	local star = { 
 		x = -half_screen_width + rnd(screen_width * 2),
 		y = -start_y + rnd(screen_width + (start_y * 2))
 	}
-	add(stars, s)
+	add(stars, star)
 end
 
 function update_stars()
 	local x_start = cam.x
 	local x_end = x_start + screen_width
-	for s in all(stars) do
-		if (s.x < x_start - half_screen_width) then
-			s.x = x_end + rnd(half_screen_width)
-			s.y = -start_y + rnd(screen_width + (start_y * 2))
-		elseif (s.x > x_end + half_screen_width) then
-			s.x = x_start - rnd(half_screen_width)
-			s.y = -start_y + rnd(screen_width + (start_y * 2))
+	for star in all(stars) do
+		if (star.x < x_start - half_screen_width) then
+			star.x = x_end + rnd(half_screen_width)
+			star.y = -start_y + rnd(screen_width + (start_y * 2))
+		elseif (star.x > x_end + half_screen_width) then
+			star.x = x_start - rnd(half_screen_width)
+			star.y = -start_y + rnd(screen_width + (start_y * 2))
 		end
 	end
 end
 
 function draw_stars()
-	for s in all(stars) do
-		line(s.x, s.y, s.x + min(2, dx), s.y, 7)
+	for star in all(stars) do
+		line(star.x, star.y, star.x + min(2, dx), star.y, 7)
 	end
 end
 
@@ -85,7 +86,7 @@ function update_shots()
 end
 
 cam = {}
-cam.x = start_x
+cam.x = x - start_x
 cam.y = start_y
 cam.dx = 1
 function update_cam()
@@ -161,19 +162,19 @@ function update_ship()
 	end
 	
 	if (dy <= -1.5) then
-		s.ship = 3
+		ship.sprite = 3
 	elseif (dy <= -1) then
-		s.ship = 2
+		ship.sprite = 2
 	elseif (dy >= 1.5) then
-		s.ship = 5
+		ship.sprite = 5
 	elseif (dy >= 1) then
-		s.ship = 4
+		ship.sprite = 4
 	else
-		s.ship = 1
+		ship.sprite = 1
 	end
 
 	if (dx < 0) then
-		s.ship += 5
+		ship.sprite += 5
 	end
 	
 	if (abs(dx) > 0) then
@@ -182,17 +183,17 @@ function update_ship()
 			sprite_start = 33
 		end
 		local sprite_end = sprite_start + 8
-		s.tail = min(sprite_end, sprite_start + (2 * flr(((abs(dx) - start_dx) / 0.4))))
-		if (s.tail == sprite_end) then
-			if (s.tail_blast_counter == 0 and flr(rnd(10)) == 1) then
-				s.tail_blast_counter = 5
-			elseif (s.tail_blast_counter > 0) then
-				s.tail_blast_counter -= 1
-				s.tail = sprite_end + 2
+		ship.tail_sprite = min(sprite_end, sprite_start + (2 * flr(((abs(dx) - start_dx) / 0.4))))
+		if (ship.tail_sprite == sprite_end) then
+			if (ship.tail_blast_counter == 0 and flr(rnd(10)) == 1) then
+				ship.tail_blast_counter = 5
+			elseif (ship.tail_blast_counter > 0) then
+				ship.tail_blast_counter -= 1
+				ship.tail_sprite = sprite_end + 2
 			end
 		end
 	else
-		s.tail = nil
+		ship.tail_sprite = nil
 	end
 
 	if (btn(🅾️)) then
@@ -208,14 +209,14 @@ function update_ship()
 end
 
 function draw_ship()
-	if (s.tail) then
+	if (ship.tail_sprite) then
 		local tail_offset = -8
 		if (dx < 0) then
 			tail_offset = 8
 		end
-		spr(s.tail, x+tail_offset, y)
+		spr(ship.tail_sprite, x+tail_offset, y)
 	end
-	spr(s.ship, x, y)
+	spr(ship.sprite, x, y)
 end
 
 function _update60()
