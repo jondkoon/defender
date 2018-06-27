@@ -1,6 +1,17 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+screen_width = 128
+half_screen_width = screen_width / 2
+screen_height = 128
+ship_height = 7
+screen_vertical_margin = screen_height / 2
+max_y = screen_height + screen_vertical_margin
+min_y = -screen_vertical_margin
+
+s = {}
+s.ship = 1
+s.tail_blast_counter = 0
 start_x = 10
 start_y = 60
 x = start_x
@@ -13,17 +24,7 @@ max_dx = 3
 ddy = 0.15
 ddx = 0.4
 decel = 0.5
-s = {}
-s.ship = 1
-s.tail_blast_counter = 0
-screen_width = 128
-half_screen_width = screen_width / 2
-screen_height = 128
-ship_height = 7
 ship_nose_offset = 3
-screen_vertical_margin = screen_height / 2
-max_y = screen_height + screen_vertical_margin
-min_y = -screen_vertical_margin
 
 stars = {}
 for i = 0, 50 + rnd(50) do
@@ -120,7 +121,8 @@ function update_cam()
 end
 
 function set_cam()
-	camera(cam.x, cam.y)
+	local x_offset = flr(dx * 2)
+	camera(cam.x - x_offset(), cam.y)
 end
 
 function update_ship()
@@ -195,7 +197,7 @@ function update_ship()
 	if (btn(🅾️)) then
 		if (shot_delay == 0) then
 			shot_delay = 8
-			make_shot(x+x_offset(), y+ship_nose_offset, dx)
+			make_shot(x, y+ship_nose_offset, dx)
 		else
 			shot_delay -= 1
 		end
@@ -204,27 +206,22 @@ function update_ship()
 	end
 end
 
-function _update60()
-	update_ship()
-	update_stars()
-	update_shots()
-	update_cam()
-end
-
-function x_offset()
-	return flr(dx * 2)
-end
-
 function draw_ship()
-	local offset = x_offset()
 	if (s.tail) then
 		local tail_offset = -8
 		if (dx < 0) then
 			tail_offset = 8
 		end
-		spr(s.tail, x+offset+tail_offset, y)
+		spr(s.tail, x+tail_offset, y)
 	end
-	spr(s.ship, x+offset, y)
+	spr(s.ship, x, y)
+end
+
+function _update60()
+	update_ship()
+	update_stars()
+	update_shots()
+	update_cam()
 end
 
 function _draw()
