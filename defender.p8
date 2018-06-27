@@ -4,7 +4,6 @@ __lua__
 screen_width = 128
 half_screen_width = screen_width / 2
 screen_height = 128
-ship_height = 7
 screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
@@ -12,7 +11,7 @@ min_y = -screen_vertical_margin
 s = {}
 s.ship = 1
 s.tail_blast_counter = 0
-start_x = 10
+start_x = screen_width / 4
 start_y = 60
 x = start_x
 y = start_y
@@ -25,6 +24,8 @@ ddy = 0.15
 ddx = 0.4
 decel = 0.5
 ship_nose_offset = 3
+ship_height = 7
+ship_width = 8
 
 stars = {}
 for i = 0, 50 + rnd(50) do
@@ -90,7 +91,7 @@ cam.dx = 1
 function update_cam()
 	local desired_x = x - start_x
 	if (dx < 0) then
-		desired_x = x - screen_width + (start_x * 2)
+		desired_x = x - screen_width + start_x + ship_width
 	end
 
 	local diff = cam.x - desired_x
@@ -122,7 +123,7 @@ end
 
 function set_cam()
 	local x_offset = flr(dx * 2)
-	camera(cam.x - x_offset(), cam.y)
+	camera(cam.x - x_offset, cam.y)
 end
 
 function update_ship()
