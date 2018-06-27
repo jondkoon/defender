@@ -5,7 +5,8 @@ start_x = 10
 start_y = 60
 x = start_x
 y = start_y
-dy = 0.5
+baseline_dy = 0.5
+dy = baseline_dy
 start_dx = 0.5
 dx = start_dx
 max_dx = 3
@@ -19,6 +20,7 @@ screen_width = 128
 half_screen_width = screen_width / 2
 screen_height = 128
 ship_height = 7
+ship_nose_offset = 3
 screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
@@ -121,12 +123,12 @@ function set_cam()
 	camera(cam.x, cam.y)
 end
 
-function _update60()
+function update_ship()
 	if(btn(⬆️)) then
-		dy = dy or -0.5
+		dy = dy or -baseline_dy
 		dy -= ddy
 	elseif(btn(⬇️)) then
-		dy = dy or 0.5
+		dy = dy or baseline_dy
 		dy += ddy
 	else
 		if (abs(dy) <= decel) then
@@ -193,14 +195,17 @@ function _update60()
 	if (btn(🅾️)) then
 		if (shot_delay == 0) then
 			shot_delay = 8
-			make_shot(x+x_offset(), y+3, dx)
+			make_shot(x+x_offset(), y+ship_nose_offset, dx)
 		else
 			shot_delay -= 1
 		end
 	else
 		shot_delay = 0
-	end	
+	end
+end
 
+function _update60()
+	update_ship()
 	update_stars()
 	update_shots()
 	update_cam()
