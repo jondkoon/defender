@@ -14,7 +14,7 @@ ship.tail_sprite = nil
 ship.tail_blast_counter = 0
 start_x = flr(screen_width / 5)
 start_y = 60
-x = start_x
+ship.x = start_x
 y = start_y
 baseline_dy = 0.5
 dy = baseline_dy
@@ -22,7 +22,7 @@ start_dx = 0.5
 dx = start_dx
 max_dx = 3
 ddy = 0.15
-ddx = 0.4
+ddx = 0.2
 decel = 0.5
 ship_nose_offset = 3
 ship_height = 7
@@ -86,13 +86,13 @@ function update_shots()
 end
 
 cam = {}
-cam.x = x - start_x
+cam.x = ship.x - start_x
 cam.y = start_y
 cam.dx = 1
 function update_cam()
-	local desired_x = x - start_x
+	local desired_x = ship.x - start_x
 	if (dx < 0) then
-		desired_x = x - screen_width + start_x + ship_width
+		desired_x = ship.x - screen_width + start_x + ship_width
 	end
 
 	local diff = cam.x - desired_x
@@ -151,7 +151,7 @@ function update_ship()
 	end
 	
 	y += dy
-	x += dx
+	ship.x += dx
 	
 	if (y > max_y - ship_height) then
 		dy = max(-3, dy * -1)
@@ -214,9 +214,9 @@ function draw_ship()
 		if (dx < 0) then
 			tail_offset = 8
 		end
-		spr(ship.tail_sprite, x+tail_offset, y)
+		spr(ship.tail_sprite, ship.x+tail_offset, y)
 	end
-	spr(ship.sprite, x, y)
+	spr(ship.sprite, ship.x, y)
 end
 
 function _update60()
