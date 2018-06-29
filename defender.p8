@@ -15,7 +15,7 @@ ship.tail_blast_counter = 0
 start_x = flr(screen_width / 5)
 start_y = 60
 ship.x = start_x
-y = start_y
+ship.y = start_y
 baseline_dy = 0.5
 dy = baseline_dy
 start_dx = 0.5
@@ -111,7 +111,7 @@ function update_cam()
 		cam.dx = 1
 	end
 
-	desired_y = y-start_y
+	desired_y = ship.y-start_y
 	if (desired_y < min_y) then
 		cam.y = min_y
 	elseif(desired_y > max_y - screen_height) then
@@ -150,15 +150,15 @@ function update_ship()
 		dx -= ddx
 	end
 	
-	y += dy
+	ship.y += dy
 	ship.x += dx
 	
-	if (y > max_y - ship_height) then
+	if (ship.y > max_y - ship_height) then
 		dy = max(-3, dy * -1)
-		y = max_y - ship_height
-	elseif (y < min_y) then
+		ship.y = max_y - ship_height
+	elseif (ship.y < min_y) then
 		dy = min(3, dy * -1)
-		y = min_y
+		ship.y = min_y
 	end
 	
 	if (dy <= -1.5) then
@@ -214,9 +214,9 @@ function draw_ship()
 		if (dx < 0) then
 			tail_offset = 8
 		end
-		spr(ship.tail_sprite, ship.x+tail_offset, y)
+		spr(ship.tail_sprite, ship.x+tail_offset, ship.y)
 	end
-	spr(ship.sprite, ship.x, y)
+	spr(ship.sprite, ship.x, ship.y)
 end
 
 function _update60()
