@@ -173,20 +173,12 @@ function update_ship()
 end
 
 function draw_ship()
-	if (ship.dy <= -1.5) then
-		ship.sprite = 3
-	elseif (ship.dy <= -1) then
-		ship.sprite = 2
-	elseif (ship.dy >= 1.5) then
-		ship.sprite = 5
-	elseif (ship.dy >= 1) then
-		ship.sprite = 4
-	else
+	if (abs(ship.dy) <= 1) then
 		ship.sprite = 1
-	end
-
-	if (ship.dx < 0) then
-		ship.sprite += 5
+	elseif (abs(ship.dy) <= 1.5) then
+		ship.sprite = 2
+	else
+		ship.sprite = 3
 	end
 	
 	if (abs(ship.dx) > 0) then
@@ -207,7 +199,7 @@ function draw_ship()
 	else
 		ship.tail_sprite = nil
 	end
-	
+
 	if (ship.tail_sprite) then
 		local tail_offset = -8
 		if (ship.dx < 0) then
@@ -215,7 +207,10 @@ function draw_ship()
 		end
 		spr(ship.tail_sprite, ship.x+tail_offset, ship.y)
 	end
-	spr(ship.sprite, ship.x, ship.y)
+	local flip_x = ship.dx < 0
+	local flip_y = ship.dy > 0
+	local y_offset = flip_y and -1 or 0
+	spr(ship.sprite, ship.x, ship.y + y_offset, 1, 1, flip_x, flip_y)
 end
 
 function _update60()
