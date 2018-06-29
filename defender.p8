@@ -9,8 +9,6 @@ max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
 ship = {}
-ship.sprite = 1
-ship.tail_sprite = nil
 ship.tail_blast_counter = 0
 start_x = flr(screen_width / 5)
 ship.x = start_x
@@ -173,44 +171,41 @@ function update_ship()
 end
 
 function draw_ship()
+	local ship_sprite, tail_sprite
 	if (abs(ship.dy) <= 1) then
-		ship.sprite = 1
+		ship_sprite = 1
 	elseif (abs(ship.dy) <= 1.5) then
-		ship.sprite = 2
+		ship_sprite = 2
 	else
-		ship.sprite = 3
+		ship_sprite = 3
 	end
 	
 	if (abs(ship.dx) > 0) then
 		local sprite_start = 17
-		if (ship.dx < 0) then
-			sprite_start = 33
-		end
 		local sprite_end = sprite_start + 8
-		ship.tail_sprite = min(sprite_end, sprite_start + (2 * flr(((abs(ship.dx) - start_dx) / 0.4))))
-		if (ship.tail_sprite == sprite_end) then
+		tail_sprite = min(sprite_end, sprite_start + (2 * flr(((abs(ship.dx) - start_dx) / 0.4))))
+		if (tail_sprite == sprite_end) then
 			if (ship.tail_blast_counter == 0 and flr(rnd(10)) == 1) then
 				ship.tail_blast_counter = 5
 			elseif (ship.tail_blast_counter > 0) then
 				ship.tail_blast_counter -= 1
-				ship.tail_sprite = sprite_end + 2
+				tail_sprite = sprite_end + 2
 			end
 		end
-	else
-		ship.tail_sprite = nil
 	end
 
-	if (ship.tail_sprite) then
+	local flip_x = ship.dx < 0
+	local flip_y = ship.dy > 0
+	local y_offset = flip_y and -1 or 0
+	spr(ship_sprite, ship.x, ship.y + y_offset, 1, 1, flip_x, flip_y)
+
+	if (tail_sprite) then
 		local tail_offset = -8
 		if (ship.dx < 0) then
 			tail_offset = 8
 		end
-		spr(ship.tail_sprite, ship.x+tail_offset, ship.y)
-	end
-	local flip_x = ship.dx < 0
-	local flip_y = ship.dy > 0
-	local y_offset = flip_y and -1 or 0
-	spr(ship.sprite, ship.x, ship.y + y_offset, 1, 1, flip_x, flip_y)
+		spr(tail_sprite, ship.x+tail_offset, ship.y+y_offset, 1, 1, flip_x, flip_y)
+	end	
 end
 
 function _update60()
