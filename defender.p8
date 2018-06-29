@@ -13,11 +13,11 @@ ship.sprite = 1
 ship.tail_sprite = nil
 ship.tail_blast_counter = 0
 start_x = flr(screen_width / 5)
-start_y = 60
 ship.x = start_x
+start_y = 60
 ship.y = start_y
 baseline_dy = 0.5
-dy = baseline_dy
+ship.dy = baseline_dy
 start_dx = 0.5
 dx = start_dx
 max_dx = 3
@@ -129,18 +129,18 @@ end
 
 function update_ship()
 	if(btn(⬆️)) then
-		dy = dy or -baseline_dy
-		dy -= ddy
+		ship.dy = ship.dy or -baseline_dy
+		ship.dy -= ddy
 	elseif(btn(⬇️)) then
-		dy = dy or baseline_dy
-		dy += ddy
+		ship.dy = ship.dy or baseline_dy
+		ship.dy += ddy
 	else
-		if (abs(dy) <= decel) then
-			dy = 0
-		elseif (dy <= 0) then
-			dy += decel
-		elseif (dy > 0) then
-			dy -= decel
+		if (abs(ship.dy) <= decel) then
+			ship.dy = 0
+		elseif (ship.dy <= 0) then
+			ship.dy += decel
+		elseif (ship.dy > 0) then
+			ship.dy -= decel
 		end
 	end
 	
@@ -150,24 +150,24 @@ function update_ship()
 		dx -= ddx
 	end
 	
-	ship.y += dy
+	ship.y += ship.dy
 	ship.x += dx
 	
 	if (ship.y > max_y - ship_height) then
-		dy = max(-3, dy * -1)
+		ship.dy = max(-3, ship.dy * -1)
 		ship.y = max_y - ship_height
 	elseif (ship.y < min_y) then
-		dy = min(3, dy * -1)
+		ship.dy = min(3, ship.dy * -1)
 		ship.y = min_y
 	end
 	
-	if (dy <= -1.5) then
+	if (ship.dy <= -1.5) then
 		ship.sprite = 3
-	elseif (dy <= -1) then
+	elseif (ship.dy <= -1) then
 		ship.sprite = 2
-	elseif (dy >= 1.5) then
+	elseif (ship.dy >= 1.5) then
 		ship.sprite = 5
-	elseif (dy >= 1) then
+	elseif (ship.dy >= 1) then
 		ship.sprite = 4
 	else
 		ship.sprite = 1
