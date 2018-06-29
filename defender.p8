@@ -20,10 +20,10 @@ baseline_dy = 0.5
 ship.dy = baseline_dy
 start_dx = 0.5
 ship.dx = start_dx
-max_dx = 3
-ddy = 0.15
-ddx = 0.2
-decel = 0.5
+ship_max_dx = 3
+ship_ddy = 0.15
+ship_ddx = 0.2
+ship_decel = 0.5
 ship_nose_offset = 3
 ship_height = 7
 ship_width = 8
@@ -119,7 +119,6 @@ function update_cam()
 	else
 		cam.y = desired_y
 	end
-
 end
 
 function set_cam()
@@ -130,24 +129,24 @@ end
 function update_ship()
 	if(btn(⬆️)) then
 		ship.dy = ship.dy or -baseline_dy
-		ship.dy -= ddy
+		ship.dy -= ship_ddy
 	elseif(btn(⬇️)) then
 		ship.dy = ship.dy or baseline_dy
-		ship.dy += ddy
+		ship.dy += ship_ddy
 	else
-		if (abs(ship.dy) <= decel) then
+		if (abs(ship.dy) <= ship_decel) then
 			ship.dy = 0
 		elseif (ship.dy <= 0) then
-			ship.dy += decel
+			ship.dy += ship_decel
 		elseif (ship.dy > 0) then
-			ship.dy -= decel
+			ship.dy -= ship_decel
 		end
 	end
 	
-	if (btn(➡️) and ship.dx < max_dx) then
-		ship.dx += ddx
-	elseif (btn(⬅️) and ship.dx > -max_dx) then
-		ship.dx -= ddx
+	if (btn(➡️) and ship.dx < ship_max_dx) then
+		ship.dx += ship_ddx
+	elseif (btn(⬅️) and ship.dx > -ship_max_dx) then
+		ship.dx -= ship_ddx
 	end
 	
 	ship.y += ship.dy
@@ -199,7 +198,7 @@ function update_ship()
 	if (btn(🅾️)) then
 		if (shot_delay == 0) then
 			shot_delay = 8
-			make_shot(x, y+ship_nose_offset, ship.dx)
+			make_shot(ship.x, ship.y+ship_nose_offset, ship.dx)
 		else
 			shot_delay -= 1
 		end
