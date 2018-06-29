@@ -159,7 +159,20 @@ function update_ship()
 		ship.dy = min(3, ship.dy * -1)
 		ship.y = min_y
 	end
-	
+
+	if (btn(🅾️)) then
+		if (shot_delay == 0) then
+			shot_delay = 8
+			make_shot(ship.x, ship.y+ship_nose_offset, ship.dx)
+		else
+			shot_delay -= 1
+		end
+	else
+		shot_delay = 0
+	end
+end
+
+function draw_ship()
 	if (ship.dy <= -1.5) then
 		ship.sprite = 3
 	elseif (ship.dy <= -1) then
@@ -194,20 +207,7 @@ function update_ship()
 	else
 		ship.tail_sprite = nil
 	end
-
-	if (btn(🅾️)) then
-		if (shot_delay == 0) then
-			shot_delay = 8
-			make_shot(ship.x, ship.y+ship_nose_offset, ship.dx)
-		else
-			shot_delay -= 1
-		end
-	else
-		shot_delay = 0
-	end
-end
-
-function draw_ship()
+	
 	if (ship.tail_sprite) then
 		local tail_offset = -8
 		if (ship.dx < 0) then
