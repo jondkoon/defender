@@ -71,7 +71,7 @@ function make_ship(x, y, dx)
 		fire = function(self)
 			if (self.shot_delay == 0) then
 				self.shot_delay = 8
-				make_shot(self.x, self.y+ship_nose_offset, self.dx)
+				make_shot(self.x + (self.dx > 0 and 3 or -3), self.y+ship_nose_offset, self.dx)
 			else
 				self.shot_delay -= 1
 			end
