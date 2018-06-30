@@ -33,30 +33,60 @@ function make_ship(x, y, dx)
 		x = x,
 		y = y,
 		tail_blast_counter = 0,
+		shot_delay = 0,
 		dx = dx,
-		update = function(self)
+		control = function(self)
 			if(btn(⬆️)) then
+				self:go_up()
+			elseif(btn(⬇️)) then
+				self:go_down()
+			else
+				self:decel_y()
+			end
+			
+			if (btn(➡️)) then
+				self:go_right()
+			elseif (btn(⬅️)) then
+				self:go_left()
+			end
+
+			if (btn(🅾️)) then
+				self:fire()
+			end
+		end,
+		go_right = function(self)
+				self.dx = min(self.dx + ship_ddx, ship_max_dx)
+		end,
+		go_left = function(self)
+				self.dx = max(self.dx - ship_ddx, -ship_max_dx)
+		end,
+		go_up = function(self)
 				self.dy = self.dy or -baseline_dy
 				self.dy -= ship_ddy
-			elseif(btn(⬇️)) then
+		end,
+		go_down = function(self)
 				self.dy = self.dy or baseline_dy
 				self.dy += ship_ddy
+		end,
+		fire = function(self)
+			if (self.shot_delay == 0) then
+				self.shot_delay = 8
+				make_shot(self.x, self.y+ship_nose_offset, self.dx)
 			else
-				if (abs(self.dy) <= ship_decel) then
-					self.dy = 0
-				elseif (self.dy <= 0) then
-					self.dy += ship_decel
-				elseif (self.dy > 0) then
-					self.dy -= ship_decel
-				end
+				self.shot_delay -= 1
 			end
-			
-			if (btn(➡️) and self.dx < ship_max_dx) then
-				self.dx += ship_ddx
-			elseif (btn(⬅️) and self.dx > -ship_max_dx) then
-				self.dx -= ship_ddx
+		end,
+		decel_y = function(self)
+			if (abs(self.dy) <= ship_decel) then
+				self.dy = 0
+			elseif (self.dy <= 0) then
+				self.dy += ship_decel
+			elseif (self.dy > 0) then
+				self.dy -= ship_decel
 			end
-			
+		end,
+		update = function(self)
+			self:control()
 			self.y += self.dy
 			self.x += self.dx
 			
@@ -66,17 +96,6 @@ function make_ship(x, y, dx)
 			elseif (self.y < min_y) then
 				self.dy = min(3, self.dy * -1)
 				self.y = min_y
-			end
-
-			if (btn(🅾️)) then
-				if (shot_delay == 0) then
-					shot_delay = 8
-					make_shot(self.x, self.y+ship_nose_offset, self.dx)
-				else
-					shot_delay -= 1
-				end
-			else
-				shot_delay = 0
 			end
 		end,
 		draw = function(self)
