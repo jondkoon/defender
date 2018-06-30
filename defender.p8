@@ -8,16 +8,10 @@ screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-ship = {}
-ship.tail_blast_counter = 0
 start_x = flr(screen_width / 5)
-ship.x = start_x
 start_y = 60
-ship.y = start_y
 baseline_dy = 0.5
-ship.dy = baseline_dy
 start_dx = 0.5
-ship.dx = start_dx
 ship_max_dx = 3
 ship_ddy = 0.15
 ship_ddx = 0.2
@@ -25,7 +19,6 @@ ship_decel = 0.5
 ship_nose_offset = 3
 ship_height = 7
 ship_width = 8
-
 
 sound_on = false
 _sfx = sfx
@@ -35,9 +28,103 @@ function sfx(id)
 	end
 end
 
+function make_ship(x, y, dx)
+	local ship = {
+		x = x,
+		y = y,
+		tail_blast_counter = 0,
+		dx = dx,
+		update = function(self)
+			if(btn(⬆️)) then
+				self.dy = self.dy or -baseline_dy
+				self.dy -= ship_ddy
+			elseif(btn(⬇️)) then
+				self.dy = self.dy or baseline_dy
+				self.dy += ship_ddy
+			else
+				if (abs(self.dy) <= ship_decel) then
+					self.dy = 0
+				elseif (self.dy <= 0) then
+					self.dy += ship_decel
+				elseif (self.dy > 0) then
+					self.dy -= ship_decel
+				end
+			end
+			
+			if (btn(➡️) and self.dx < ship_max_dx) then
+				self.dx += ship_ddx
+			elseif (btn(⬅️) and self.dx > -ship_max_dx) then
+				self.dx -= ship_ddx
+			end
+			
+			self.y += self.dy
+			self.x += self.dx
+			
+			if (self.y > max_y - ship_height) then
+				self.dy = max(-3, self.dy * -1)
+				self.y = max_y - ship_height
+			elseif (self.y < min_y) then
+				self.dy = min(3, self.dy * -1)
+				self.y = min_y
+			end
+
+			if (btn(🅾️)) then
+				if (shot_delay == 0) then
+					shot_delay = 8
+					make_shot(self.x, self.y+ship_nose_offset, self.dx)
+				else
+					shot_delay -= 1
+				end
+			else
+				shot_delay = 0
+			end
+		end,
+		draw = function(self)
+			local ship_sprite, tail_sprite
+			if (abs(self.dy) <= 1) then
+				ship_sprite = 1
+			elseif (abs(self.dy) <= 1.5) then
+				ship_sprite = 2
+			else
+				ship_sprite = 3
+			end
+			
+			if (abs(self.dx) > 0) then
+				local sprite_start = 17
+				local sprite_end = sprite_start + 8
+				tail_sprite = min(sprite_end, sprite_start + (2 * flr(((abs(self.dx) - start_dx) / 0.4))))
+				if (tail_sprite == sprite_end) then
+					if (self.tail_blast_counter == 0 and flr(rnd(10)) == 1) then
+						self.tail_blast_counter = 5
+					elseif (self.tail_blast_counter > 0) then
+						self.tail_blast_counter -= 1
+						tail_sprite = sprite_end + 2
+					end
+				end
+			end
+
+			local flip_x = self.dx < 0
+			local flip_y = self.dy > 0
+			local y_offset = flip_y and -1 or 0
+			spr(ship_sprite, self.x, self.y + y_offset, 1, 1, flip_x, flip_y)
+
+			if (tail_sprite) then
+				local tail_offset = -8
+				if (self.dx < 0) then
+					tail_offset = 8
+				end
+				spr(tail_sprite, self.x+tail_offset, self.y+y_offset, 1, 1, flip_x, flip_y)
+			end		
+		end
+	}
+	return ship
+end
+
+ship = make_ship(start_x, start_y, start_dx)
+
 stars = {}
 for i = 0, 50 + rnd(50) do
-	local star = { 
+	local star = {
 		x = -half_screen_width + rnd(screen_width * 2),
 		y = -start_y + rnd(screen_width + (start_y * 2))
 	}
@@ -134,92 +221,8 @@ function set_cam()
 	camera(cam.x - x_offset, cam.y)
 end
 
-function update_ship()
-	if(btn(⬆️)) then
-		ship.dy = ship.dy or -baseline_dy
-		ship.dy -= ship_ddy
-	elseif(btn(⬇️)) then
-		ship.dy = ship.dy or baseline_dy
-		ship.dy += ship_ddy
-	else
-		if (abs(ship.dy) <= ship_decel) then
-			ship.dy = 0
-		elseif (ship.dy <= 0) then
-			ship.dy += ship_decel
-		elseif (ship.dy > 0) then
-			ship.dy -= ship_decel
-		end
-	end
-	
-	if (btn(➡️) and ship.dx < ship_max_dx) then
-		ship.dx += ship_ddx
-	elseif (btn(⬅️) and ship.dx > -ship_max_dx) then
-		ship.dx -= ship_ddx
-	end
-	
-	ship.y += ship.dy
-	ship.x += ship.dx
-	
-	if (ship.y > max_y - ship_height) then
-		ship.dy = max(-3, ship.dy * -1)
-		ship.y = max_y - ship_height
-	elseif (ship.y < min_y) then
-		ship.dy = min(3, ship.dy * -1)
-		ship.y = min_y
-	end
-
-	if (btn(🅾️)) then
-		if (shot_delay == 0) then
-			shot_delay = 8
-			make_shot(ship.x, ship.y+ship_nose_offset, ship.dx)
-		else
-			shot_delay -= 1
-		end
-	else
-		shot_delay = 0
-	end
-end
-
-function draw_ship()
-	local ship_sprite, tail_sprite
-	if (abs(ship.dy) <= 1) then
-		ship_sprite = 1
-	elseif (abs(ship.dy) <= 1.5) then
-		ship_sprite = 2
-	else
-		ship_sprite = 3
-	end
-	
-	if (abs(ship.dx) > 0) then
-		local sprite_start = 17
-		local sprite_end = sprite_start + 8
-		tail_sprite = min(sprite_end, sprite_start + (2 * flr(((abs(ship.dx) - start_dx) / 0.4))))
-		if (tail_sprite == sprite_end) then
-			if (ship.tail_blast_counter == 0 and flr(rnd(10)) == 1) then
-				ship.tail_blast_counter = 5
-			elseif (ship.tail_blast_counter > 0) then
-				ship.tail_blast_counter -= 1
-				tail_sprite = sprite_end + 2
-			end
-		end
-	end
-
-	local flip_x = ship.dx < 0
-	local flip_y = ship.dy > 0
-	local y_offset = flip_y and -1 or 0
-	spr(ship_sprite, ship.x, ship.y + y_offset, 1, 1, flip_x, flip_y)
-
-	if (tail_sprite) then
-		local tail_offset = -8
-		if (ship.dx < 0) then
-			tail_offset = 8
-		end
-		spr(tail_sprite, ship.x+tail_offset, ship.y+y_offset, 1, 1, flip_x, flip_y)
-	end	
-end
-
 function _update60()
-	update_ship()
+	ship:update()
 	update_stars()
 	update_shots()
 	update_cam()
@@ -230,7 +233,7 @@ function _draw()
 	set_cam()
 	draw_stars()
 	draw_shots()
-	draw_ship()
+	ship:draw()
 end
 __gfx__
 00000000066600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
