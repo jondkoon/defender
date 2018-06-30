@@ -120,7 +120,7 @@ function make_ship(x, y, dx)
 	return ship
 end
 
-ship = make_ship(start_x, start_y, start_dx)
+player_ship = make_ship(start_x, start_y, start_dx)
 
 stars = {}
 for i = 0, 50 + rnd(50) do
@@ -147,7 +147,7 @@ end
 
 function draw_stars()
 	for star in all(stars) do
-		line(star.x, star.y, star.x + min(2, ship.dx), star.y, 7)
+		line(star.x, star.y, star.x + min(2, player_ship.dx), star.y, 7)
 	end
 end
 
@@ -181,18 +181,18 @@ function update_shots()
 end
 
 cam = {}
-cam.x = ship.x - start_x
+cam.x = player_ship.x - start_x
 cam.y = start_y
 cam.dx = 1
 function update_cam()
-	local desired_x = ship.x - start_x
-	if (ship.dx < 0) then
-		desired_x = ship.x - screen_width + start_x + ship_width
+	local desired_x = player_ship.x - start_x
+	if (player_ship.dx < 0) then
+		desired_x = player_ship.x - screen_width + start_x + ship_width
 	end
 
 	local diff = cam.x - desired_x
 
-	if (abs(diff) <= abs(ship.dx)) then
+	if (abs(diff) <= abs(player_ship.dx)) then
 		cam.x = desired_x
 	elseif (diff < 0) then
 		cam.x += cam.dx
@@ -201,12 +201,12 @@ function update_cam()
 	end
 
 	if (cam.x != desired_x) then
-		cam.dx = min(cam.dx + 1, abs(ship.dx) + 2)
+		cam.dx = min(cam.dx + 1, abs(player_ship.dx) + 2)
 	else
 		cam.dx = 1
 	end
 
-	desired_y = ship.y-start_y
+	desired_y = player_ship.y-start_y
 	if (desired_y < min_y) then
 		cam.y = min_y
 	elseif(desired_y > max_y - screen_height) then
@@ -217,12 +217,12 @@ function update_cam()
 end
 
 function set_cam()
-	local x_offset = flr(ship.dx * 2)
+	local x_offset = flr(player_ship.dx * 2)
 	camera(cam.x - x_offset, cam.y)
 end
 
 function _update60()
-	ship:update()
+	player_ship:update()
 	update_stars()
 	update_shots()
 	update_cam()
@@ -233,7 +233,7 @@ function _draw()
 	set_cam()
 	draw_stars()
 	draw_shots()
-	ship:draw()
+	player_ship:draw()
 end
 __gfx__
 00000000066600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
