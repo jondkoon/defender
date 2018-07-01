@@ -11,6 +11,7 @@ min_y = -screen_vertical_margin
 start_x = flr(screen_width / 5)
 start_y = 60
 baseline_dy = 0.5
+ship_max_dy = 5
 start_dx = 0.5
 ship_max_dx = 3
 ship_ddy = 0.15
@@ -35,25 +36,7 @@ function make_ship(x, y, dx)
 		tail_blast_counter = 0,
 		shot_delay = 0,
 		dx = dx,
-		control = function(self)
-			if(btn(⬆️)) then
-				self:go_up()
-			elseif(btn(⬇️)) then
-				self:go_down()
-			else
-				self:decel_y()
-			end
-			
-			if (btn(➡️)) then
-				self:go_right()
-			elseif (btn(⬅️)) then
-				self:go_left()
-			end
-
-			if (btn(🅾️)) then
-				self:fire()
-			end
-		end,
+		dy = 0,
 		go_right = function(self)
 				self.dx = min(self.dx + ship_ddx, ship_max_dx)
 		end,
@@ -62,11 +45,11 @@ function make_ship(x, y, dx)
 		end,
 		go_up = function(self)
 				self.dy = self.dy or -baseline_dy
-				self.dy -= ship_ddy
+				self.dy = max(self.dy - ship_ddy, -ship_max_dy)
 		end,
 		go_down = function(self)
 				self.dy = self.dy or baseline_dy
-				self.dy += ship_ddy
+				self.dy = min(self.dy + ship_ddy, ship_max_dy)
 		end,
 		fire = function(self)
 			if (self.shot_delay == 0) then
@@ -139,7 +122,50 @@ function make_ship(x, y, dx)
 	return ship
 end
 
+ships = {}
 player_ship = make_ship(start_x, start_y, start_dx)
+player_ship.control = function(self)
+	if(btn(⬆️)) then
+		self:go_up()
+	elseif(btn(⬇️)) then
+		self:go_down()
+	else
+		self:decel_y()
+	end
+	
+	if (btn(➡️)) then
+		self:go_right()
+	elseif (btn(⬅️)) then
+		self:go_left()
+	end
+
+	if (btn(🅾️)) then
+		self:fire()
+	end
+end
+add(ships, player_ship)
+
+bad_ship = make_ship(start_x+50, start_y, start_dx)
+bad_ship.control = function(self)
+	local desired_y = (player_ship.y + player_ship.dy)
+	local y_diff = (self.y + self.dy) - desired_y
+	if(abs(y_diff) <= 5) then
+		self:decel_y()
+	elseif (y_diff > 0) then
+		self:go_up()
+	else 
+		self:go_down()
+	end
+
+	local desired_x = (player_ship.x + player_ship.dx) - 20
+	local x_diff = (self.x + self.dx) - desired_x
+	if(x_diff > 10) then
+		self:go_left()
+	elseif (x_diff < -10) then
+		self:go_right()
+	end
+end
+add(ships, bad_ship)
 
 stars = {}
 for i = 0, 50 + rnd(50) do
@@ -237,11 +263,13 @@ end
 
 function set_cam()
 	local x_offset = flr(player_ship.dx * 2)
-	camera(cam.x - x_offset, cam.y)
+	camera(cam.x - x_offset, flr(cam.y))
 end
 
 function _update60()
-	player_ship:update()
+	for ship in all(ships) do
+		ship:update()
+	end
 	update_stars()
 	update_shots()
 	update_cam()
@@ -252,7 +280,9 @@ function _draw()
 	set_cam()
 	draw_stars()
 	draw_shots()
-	player_ship:draw()
+	for ship in all(ships) do
+		ship:draw()
+	end
 end
 __gfx__
 00000000066600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
