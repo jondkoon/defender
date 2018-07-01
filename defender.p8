@@ -108,6 +108,10 @@ function make_ship(x, y, dx)
 			local flip_x = self.dx < 0
 			local flip_y = self.dy > 0
 			local y_offset = flip_y and -1 or 0
+			if (self.pal) then
+				self:pal()
+				pal()
+			end
 			spr(ship_sprite, self.x, self.y + y_offset, 1, 1, flip_x, flip_y)
 
 			if (tail_sprite) then
@@ -146,6 +150,11 @@ end
 add(ships, player_ship)
 
 bad_ship = make_ship(start_x+50, start_y, start_dx)
+bad_ship.pal = function(self)
+	pal(5,2)
+	pal(7,8)
+	pal(6,13)
+end
 bad_ship.control = function(self)
 	local desired_y = (player_ship.y + player_ship.dy)
 	local y_diff = (self.y + self.dy) - desired_y
@@ -263,7 +272,7 @@ end
 
 function set_cam()
 	local x_offset = flr(player_ship.dx * 2)
-	camera(cam.x - x_offset, flr(cam.y))
+	camera(cam.x - x_offset, cam.y)
 end
 
 function _update60()
