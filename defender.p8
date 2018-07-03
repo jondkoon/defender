@@ -141,6 +141,7 @@ function make_ship(x, y, dx)
 			if (self.hit) then
 				white_pal()
 				sfx(1)
+				self.hit = false
 			elseif (self.pal) then
 				self:pal()
 			end
@@ -273,7 +274,7 @@ end
 
 function update_shots()
 	for shot in all(shots) do
-		if ((shot.x > cam.x + screen_width) or (shot.x < cam.x)) then
+		if ((shot.x > cam.x + screen_width + half_screen_width) or (shot.x < cam.x - half_screen_width)) then
 			del(shots,shot)
 		end
 		shot.x += shot.dx
