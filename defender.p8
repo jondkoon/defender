@@ -22,6 +22,7 @@ ship_height = 7
 ship_width = 8
 
 sound_on = true
+stop = false
 _sfx = sfx
 function sfx(id)
 	if (sound_on) then
@@ -29,10 +30,31 @@ function sfx(id)
 	end
 end
 
+function draw_hit_box(o)
+	rect(o.x, o.y, o.x + o.width, o.y + o.height, 11)
+end
+
+function white_pal()
+	for i = 0, 15 do
+		pal(i, 7)
+	end
+end
+
+function test_collision(a, b)
+	return (
+		a.x < b.x + b.width and
+		a.x + a.width > b.x and
+		a.y < b.y + b.height and
+		a.y + a.height > b.y
+	)
+end
+
 function make_ship(x, y, dx)
 	local ship = {
 		x = x,
 		y = y,
+		width = ship_width,
+		height = ship_height,
 		tail_blast_counter = 0,
 		shot_delay = 0,
 		dx = dx,
@@ -54,10 +76,14 @@ function make_ship(x, y, dx)
 		fire = function(self)
 			if (self.shot_delay == 0) then
 				self.shot_delay = 8
-				make_shot(self.x + (self.dx > 0 and 3 or -3), self.y+ship_nose_offset, self.dx)
+				self.fired = true
 			else
 				self.shot_delay -= 1
 			end
+		end,
+		check_hit = function(self, object)
+			self.hit = test_collision(self, object)
+			return self.hit
 		end,
 		decel_y = function(self)
 			if (abs(self.dy) <= ship_decel) then
@@ -79,6 +105,10 @@ function make_ship(x, y, dx)
 			elseif (self.y < min_y) then
 				self.dy = min(3, self.dy * -1)
 				self.y = min_y
+			end
+			if (self.fired) then
+				make_shot(self.x + (self.dx >= 0 and ship_width or 0), self.y+ship_nose_offset, self.dx)
+				self.fired = false
 			end
 		end,
 		draw = function(self)
@@ -108,7 +138,10 @@ function make_ship(x, y, dx)
 			local flip_x = self.dx < 0
 			local flip_y = self.dy > 0
 			local y_offset = flip_y and -1 or 0
-			if (self.pal) then
+			if (self.hit) then
+				white_pal()
+				sfx(1)
+			elseif (self.pal) then
 				self:pal()
 			end
 			spr(ship_sprite, self.x, self.y + y_offset, 1, 1, flip_x, flip_y)
@@ -120,7 +153,7 @@ function make_ship(x, y, dx)
 					tail_offset = 8
 				end
 				spr(tail_sprite, self.x+tail_offset, self.y+y_offset, 1, 1, flip_x, flip_y)
-			end		
+			end
 		end
 	}
 	return ship
@@ -173,6 +206,10 @@ bad_ship.control = function(self)
 	elseif (x_diff < -10) then
 		self:go_right()
 	end
+
+	if (rnd(1) > 0.5) then
+		self:fire()
+	end
 end
 add(ships, bad_ship)
 
@@ -209,19 +246,28 @@ shots = {}
 function make_shot(x,y,dx)
 	sfx(0)
 	local shot = {}
-	shot.x = x
+	local width = 5 + rnd(10)
+	shot.x = dx < 0 and x - width or x
 	shot.y = y
-	shot.dx = max(abs(dx) + 5, 3)
-	if (dx < 0) then
-		shot.dx *= -1
-	end
-	shot.length = 5 + rnd(10)
+	shot.dx = dx < 0 and dx - 5 or dx + 5
+	shot.width = width
+	shot.height = 1
 	add(shots,shot)
 end
 
 function draw_shots()
 	for shot in all(shots) do
-		line(shot.x, shot.y, shot.x+shot.length, shot.y, 10)
+		line(shot.x, shot.y, shot.x+shot.width, shot.y, 10)
+	end
+end
+
+function check_hits()
+	for shot in all(shots) do
+		for ship in all(ships) do
+			if (ship:check_hit(shot)) then
+				del(shots,shot)
+			end
+		end
 	end
 end
 
@@ -276,15 +322,24 @@ function set_cam()
 end
 
 function _update60()
+	if (stop) then
+		return
+	end
+
+	update_stars()
+	check_hits()
+	update_shots()
 	for ship in all(ships) do
 		ship:update()
 	end
-	update_stars()
-	update_shots()
 	update_cam()
 end
 
 function _draw()
+	if (stop) then
+		return
+	end
+
 	cls(1)
 	set_cam()
 	draw_stars()
@@ -352,3 +407,4 @@ __gfx__
 06660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
 01100000330233e002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+011000001c25300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300000
