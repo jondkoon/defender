@@ -281,46 +281,46 @@ function update_shots()
 	end
 end
 
-cam = {}
-cam.x = player_ship.x - start_x
-cam.y = start_y
-cam.dx = 1
-function update_cam()
-	local desired_x = player_ship.x - start_x
-	if (player_ship.dx < 0) then
-		desired_x = player_ship.x - screen_width + start_x + ship_width
+cam = {
+	x = player_ship.x - start_x,
+	y = start_y,
+	dx = 1,
+	update = function(self)
+		local desired_x = player_ship.x - start_x
+		if (player_ship.dx < 0) then
+			desired_x = player_ship.x - screen_width + start_x + ship_width
+		end
+
+		local diff = self.x - desired_x
+
+		if (abs(diff) <= abs(player_ship.dx)) then
+			self.x = desired_x
+		elseif (diff < 0) then
+			self.x += self.dx
+		else
+			self.x -= self.dx
+		end
+
+		if (self.x != desired_x) then
+			self.dx = min(self.dx + 1, abs(player_ship.dx) + 2)
+		else
+			self.dx = 1
+		end
+
+		desired_y = player_ship.y-start_y
+		if (desired_y < min_y) then
+			self.y = min_y
+		elseif(desired_y > max_y - screen_height) then
+			self.y = max_y - screen_height
+		else
+			self.y = desired_y
+		end	
+	end,
+	set = function(self)
+		local x_offset = flr(player_ship.dx * 2)
+		camera(self.x - x_offset, self.y)
 	end
-
-	local diff = cam.x - desired_x
-
-	if (abs(diff) <= abs(player_ship.dx)) then
-		cam.x = desired_x
-	elseif (diff < 0) then
-		cam.x += cam.dx
-	else
-		cam.x -= cam.dx
-	end
-
-	if (cam.x != desired_x) then
-		cam.dx = min(cam.dx + 1, abs(player_ship.dx) + 2)
-	else
-		cam.dx = 1
-	end
-
-	desired_y = player_ship.y-start_y
-	if (desired_y < min_y) then
-		cam.y = min_y
-	elseif(desired_y > max_y - screen_height) then
-		cam.y = max_y - screen_height
-	else
-		cam.y = desired_y
-	end
-end
-
-function set_cam()
-	local x_offset = flr(player_ship.dx * 2)
-	camera(cam.x - x_offset, cam.y)
-end
+}
 
 function _update60()
 	if (stop) then
@@ -333,7 +333,7 @@ function _update60()
 	for ship in all(ships) do
 		ship:update()
 	end
-	update_cam()
+	cam:update()
 end
 
 function _draw()
@@ -342,7 +342,7 @@ function _draw()
 	end
 
 	cls(1)
-	set_cam()
+	cam:set()
 	draw_stars()
 	draw_shots()
 	for ship in all(ships) do
