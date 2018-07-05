@@ -1,4 +1,4 @@
 # Defender
 ### A clone for the pico-8
 
-![Defender](https://raw.githubusercontent.com/jondkoon/defender/master/defender_6.gif)
+![Defender](https://github.com/jondkoon/defender/blob/master/defender.gif)
