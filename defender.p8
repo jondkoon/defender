@@ -139,6 +139,9 @@ function make_ship(x, y, dx)
 			local flip_y = self.dy > 0
 			local y_offset = flip_y and -1 or 0
 			if (self.hit) then
+				if (self.shake_on_hit) then
+					cam:shake()
+				end
 				white_pal()
 				sfx(1)
 				self.hit = false
@@ -162,6 +165,7 @@ end
 
 ships = {}
 player_ship = make_ship(start_x, start_y, start_dx)
+player_ship.shake_on_hit = true
 player_ship.control = function(self)
 	if(btn(⬆️)) then
 		self:go_up()
@@ -285,7 +289,20 @@ cam = {
 	x = player_ship.x - start_x,
 	y = start_y,
 	dx = 1,
+	shake_counter = 0,
+	shake = function(self)
+		self.shake_counter = 10
+	end,
 	update = function(self)
+		if (self.shake_counter > 0) then
+			self.shake_counter -= 1
+			self.shake_x  = rnd(3)
+			self.shake_y  = rnd(3)
+		else
+			self.shake_x  = 0
+			self.shake_y  = 0
+		end
+
 		local desired_x = player_ship.x - start_x
 		if (player_ship.dx < 0) then
 			desired_x = player_ship.x - screen_width + start_x + ship_width
@@ -318,7 +335,7 @@ cam = {
 	end,
 	set = function(self)
 		local x_offset = flr(player_ship.dx * 2)
-		camera(self.x - x_offset, self.y)
+		camera(self.x - x_offset + self.shake_x, self.y + self.shake_y)
 	end
 }
 
