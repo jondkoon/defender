@@ -249,38 +249,45 @@ end
 shots = {}
 function make_shot(x,y,dx)
 	sfx(0)
-	local shot = {}
 	local width = 5 + rnd(10)
-	shot.x = dx < 0 and x - width or x
-	shot.y = y
-	shot.dx = dx < 0 and dx - 5 or dx + 5
-	shot.width = width
-	shot.height = 1
-	add(shots,shot)
-end
+	local shot = {
+		new = true,
+		x = dx < 0 and x - width or x,
+		y = y,
+		dx = dx < 0 and dx - 5 or dx + 5,
+		width = width,
+		height = 1,
+		remove = function(self)
+			del(shots,self)
+			del(objects,self)
+		end,
+		update = function(self)
+			if (self.new) then
+				self.new = false
+				return
+			end
 
-function draw_shots()
-	for shot in all(shots) do
-		line(shot.x, shot.y, shot.x+shot.width, shot.y, 10)
-	end
+			if ((self.x > cam.x + screen_width + half_screen_width) or (self.x < cam.x - half_screen_width)) then
+				self:remove()
+			else
+				self.x += self.dx
+			end
+		end,
+		draw = function(self)
+			line(self.x, self.y, self.x+self.width, self.y, 10)
+		end
+	}
+	add(shots, shot)
+	add(objects, shot)
 end
 
 function check_hits()
 	for shot in all(shots) do
 		for ship in all(ships) do
 			if (ship:check_hit(shot)) then
-				del(shots,shot)
+				shot:remove()
 			end
 		end
-	end
-end
-
-function update_shots()
-	for shot in all(shots) do
-		if ((shot.x > cam.x + screen_width + half_screen_width) or (shot.x < cam.x - half_screen_width)) then
-			del(shots,shot)
-		end
-		shot.x += shot.dx
 	end
 end
 
@@ -344,7 +351,6 @@ function _update60()
 	end
 
 	check_hits()
-	update_shots()
 	for object in all(objects) do
 		object:update()
 	end
@@ -358,7 +364,6 @@ function _draw()
 
 	cls(1)
 	cam:set()
-	draw_shots()
 	for object in all(objects) do
 		object:draw()
 	end
