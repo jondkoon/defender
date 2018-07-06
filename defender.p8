@@ -8,8 +8,9 @@ screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-max_x = screen_width * 3
-min_x = -max_x
+scene_width = screen_width * 6
+max_x = scene_width / 2
+min_x = -(scene_width / 2)
 
 start_x = flr(screen_width / 3)
 start_y = 60
@@ -309,16 +310,16 @@ cam = {
 	end,
 	update_screen_wrap = function(self)
 		if (self.x > max_x + screen_width) then
-			self.x = self.x  - max_x
+			self.x = self.x  - scene_width
 		elseif (self.x < min_x - screen_width) then
-			self.x = self.x + max_x
+			self.x = self.x + scene_width
 		end
 		for o in all(objects) do
-			if (self:in_view_x(o.x - max_x) or self:in_view_x(o.x + o.width - max_x)) then
-				o.x = o.x - max_x
+			if (self:in_view_x(o.x - scene_width) or self:in_view_x(o.x + o.width - scene_width)) then
+				o.x = o.x - scene_width
 			end
-			if (self:in_view_x(o.x + max_x) or self:in_view_x(o.x + o.width + max_x)) then
-				o.x = o.x + max_x
+			if (self:in_view_x(o.x + scene_width) or self:in_view_x(o.x + o.width + scene_width)) then
+				o.x = o.x + scene_width
 			end
 		end
 	end,
@@ -369,6 +370,20 @@ cam = {
 		camera(self.x - x_offset + self.shake_x, self.y + self.shake_y)
 	end
 }
+
+local x_printer = {
+	x = 1,
+	y = 1,
+	width = 1,
+	update = function(self)
+		self.x = player_ship.x
+		self.y = player_ship.y - 8
+	end,
+	draw = function(self)
+		print(cam.x, self.x, self.y)
+	end
+}
+-- add(objects, x_printer)
 
 function _update60()
 	if (stop) then
