@@ -21,6 +21,8 @@ ship_nose_offset = 3
 ship_height = 7
 ship_width = 8
 
+objects = {}
+
 sound_on = true
 stop = false
 _sfx = sfx
@@ -188,6 +190,7 @@ player_ship.control = function(self)
 	end
 end
 add(ships, player_ship)
+add(objects, player_ship)
 
 bad_ship = make_ship(start_x+50, start_y, start_dx)
 bad_ship.pal = function(self)
@@ -219,6 +222,7 @@ bad_ship.control = function(self)
 	end
 end
 add(ships, bad_ship)
+add(objects, bad_ship)
 
 stars = {}
 for i = 0, 50 + rnd(50) do
@@ -349,8 +353,8 @@ function _update60()
 	update_stars()
 	check_hits()
 	update_shots()
-	for ship in all(ships) do
-		ship:update()
+	for object in all(objects) do
+		object:update()
 	end
 	cam:update()
 end
@@ -364,8 +368,8 @@ function _draw()
 	cam:set()
 	draw_stars()
 	draw_shots()
-	for ship in all(ships) do
-		ship:draw()
+	for object in all(objects) do
+		object:draw()
 	end
 end
 __gfx__
