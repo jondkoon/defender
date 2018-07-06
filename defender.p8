@@ -224,33 +224,26 @@ end
 add(ships, bad_ship)
 add(objects, bad_ship)
 
-stars = {}
 for i = 0, 50 + rnd(50) do
 	local star = {
 		x = -half_screen_width + rnd(screen_width * 2),
-		y = -start_y + rnd(screen_width + (start_y * 2))
-	}
-	add(stars, star)
-end
-
-function update_stars()
-	local x_start = cam.x
-	local x_end = x_start + screen_width
-	for star in all(stars) do
-		if (star.x < x_start - half_screen_width) then
-			star.x = x_end + rnd(half_screen_width)
-			star.y = -start_y + rnd(screen_width + (start_y * 2))
-		elseif (star.x > x_end + half_screen_width) then
-			star.x = x_start - rnd(half_screen_width)
-			star.y = -start_y + rnd(screen_width + (start_y * 2))
+		y = -start_y + rnd(screen_width + (start_y * 2)),
+		update = function(self)
+			local x_start = cam.x
+			local x_end = x_start + screen_width
+			if (self.x < x_start - half_screen_width) then
+				self.x = x_end + rnd(half_screen_width)
+				self.y = -start_y + rnd(screen_width + (start_y * 2))
+			elseif (self.x > x_end + half_screen_width) then
+				self.x = x_start - rnd(half_screen_width)
+				self.y = -start_y + rnd(screen_width + (start_y * 2))
+			end
+		end,
+		draw = function(self)
+			line(self.x, self.y, self.x + min(2, player_ship.dx), self.y, 7)
 		end
-	end
-end
-
-function draw_stars()
-	for star in all(stars) do
-		line(star.x, star.y, star.x + min(2, player_ship.dx), star.y, 7)
-	end
+	}
+	add(objects, star)
 end
 
 shots = {}
@@ -350,7 +343,6 @@ function _update60()
 		return
 	end
 
-	update_stars()
 	check_hits()
 	update_shots()
 	for object in all(objects) do
@@ -366,7 +358,6 @@ function _draw()
 
 	cls(1)
 	cam:set()
-	draw_stars()
 	draw_shots()
 	for object in all(objects) do
 		object:draw()
