@@ -8,6 +8,9 @@ screen_vertical_margin = screen_height / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
+max_x = screen_width * 3
+min_x = -max_x
+
 start_x = flr(screen_width / 3)
 start_y = 60
 baseline_dy = 0.5
@@ -228,6 +231,7 @@ for i = 0, 50 + rnd(50) do
 	local star = {
 		x = -half_screen_width + rnd(screen_width * 2),
 		y = -start_y + rnd(screen_width + (start_y * 2)),
+		width = 1,
 		update = function(self)
 			local x_start = cam.x
 			local x_end = x_start + screen_width
@@ -238,9 +242,10 @@ for i = 0, 50 + rnd(50) do
 				self.x = x_start - rnd(half_screen_width)
 				self.y = -start_y + rnd(screen_width + (start_y * 2))
 			end
+			self.width = min(2, player_ship.dx)
 		end,
 		draw = function(self)
-			line(self.x, self.y, self.x + min(2, player_ship.dx), self.y, 7)
+			line(self.x, self.y, self.x + self.width, self.y, 7)
 		end
 	}
 	add(objects, star)
@@ -299,6 +304,24 @@ cam = {
 	shake = function(self)
 		self.shake_counter = 10
 	end,
+	in_view_x = function(self, x)
+		return x >= self.x and x <= self.x + screen_width
+	end,
+	update_screen_wrap = function(self)
+		if (self.x > max_x + screen_width) then
+			self.x = self.x  - max_x
+		elseif (self.x < min_x - screen_width) then
+			self.x = self.x + max_x
+		end
+		for o in all(objects) do
+			if (self:in_view_x(o.x - max_x) or self:in_view_x(o.x + o.width - max_x)) then
+				o.x = o.x - max_x
+			end
+			if (self:in_view_x(o.x + max_x) or self:in_view_x(o.x + o.width + max_x)) then
+				o.x = o.x + max_x
+			end
+		end
+	end,
 	update = function(self)
 		if (self.shake_counter > 0) then
 			self.shake_counter -= 1
@@ -337,7 +360,9 @@ cam = {
 			self.y = max_y - screen_height
 		else
 			self.y = desired_y
-		end	
+		end
+
+		self:update_screen_wrap()
 	end,
 	set = function(self)
 		local x_offset = flr(player_ship.dx * 2)
