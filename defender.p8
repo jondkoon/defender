@@ -17,7 +17,6 @@ start_y = 60
 baseline_dy = 0.5
 ship_max_dy = 5
 start_dx = 0.5
-ship_max_dx = 3
 ship_ddy = 0.15
 ship_ddx = 0.3
 ship_decel = 0.5
@@ -63,6 +62,7 @@ function make_ship(options)
 		width = ship_width,
 		height = ship_height,
 		max_hp = options.hp,
+		max_dx = options.max_dx,
 		hp = options.hp,
 		shot_color = options.shot_color,
 		indicator_color = options.indicator_color,
@@ -74,10 +74,10 @@ function make_ship(options)
 		dx = options.dx,
 		dy = 0,
 		go_right = function(self)
-				self.dx = min(self.dx + ship_ddx, ship_max_dx)
+				self.dx = min(self.dx + ship_ddx, self.max_dx)
 		end,
 		go_left = function(self)
-				self.dx = max(self.dx - ship_ddx, -ship_max_dx)
+				self.dx = max(self.dx - ship_ddx, -self.max_dx)
 		end,
 		go_up = function(self)
 				self.dy = self.dy or -baseline_dy
@@ -217,6 +217,7 @@ player_ship = make_ship({
 	x = start_x,
 	y = start_y,
 	dx = start_dx,
+	max_dx = 3,
 	hp = 10,
 	shot_color = 10,
 	indicator_color = 11,
@@ -247,6 +248,7 @@ function make_bad_ship()
 		x = rnd(scene_width),
 		y = rnd(max_y),
 		dx = start_dx,
+		max_dx = 2,
 		hp = 3,
 		shot_color = 8,
 		indicator_color = 8,
