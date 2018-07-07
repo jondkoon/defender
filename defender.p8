@@ -132,7 +132,11 @@ function make_ship(options)
 				self.y = min_y
 			end
 			if (self.fired) then
-				make_shot(self.x + (self.dx >= 0 and ship_width or 0), self.y+ship_nose_offset, self.dx)
+				make_shot({
+					x = self.x + (self.dx >= 0 and ship_width or 0),
+					y = self.y+ship_nose_offset,
+					dx = self.dx
+				})
 				self.fired = false
 			end
 		end,
@@ -191,7 +195,7 @@ function make_ship(options)
 			local hp_full_width = self.width - 1
 			local hp_scaled_width = hp_full_width * hp_ratio
 			local hp_color = 3 -- green
-			if (hp_ratio < 0.5 or self.hp == 1) then
+			if (hp_ratio <= 0.5) then
 				hp_color = 8 -- red
 			elseif (hp_ratio < 1) then
 				hp_color = 10 -- yellow
@@ -301,14 +305,14 @@ for i = 0, 50 + rnd(50) do
 end
 
 shots = {}
-function make_shot(x,y,dx)
+function make_shot(options)
 	sfx(0)
 	local width = 5 + rnd(10)
 	local shot = {
 		new = true,
-		x = dx < 0 and x - width or x,
-		y = y,
-		dx = dx < 0 and dx - 5 or dx + 5,
+		x = options.dx < 0 and options.x - width or options.x,
+		y = options.y,
+		dx = options.dx < 0 and options.dx - 5 or options.dx + 5,
 		width = width,
 		height = 1,
 		remove = function(self)
