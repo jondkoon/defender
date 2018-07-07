@@ -55,15 +55,15 @@ function test_collision(a, b)
 	)
 end
 
-function make_ship(x, y, dx)
+function make_ship(options)
 	local ship = {
-		x = x,
-		y = y,
+		x = options.x,
+		y = options.y,
 		width = ship_width,
 		height = ship_height,
 		tail_blast_counter = 0,
 		shot_delay = 0,
-		dx = dx,
+		dx = options.dx,
 		dy = 0,
 		go_right = function(self)
 				self.dx = min(self.dx + ship_ddx, ship_max_dx)
@@ -172,7 +172,7 @@ function make_ship(x, y, dx)
 end
 
 ships = {}
-player_ship = make_ship(start_x, start_y, start_dx)
+player_ship = make_ship({ x = start_x, y = start_y, dx = start_dx })
 player_ship.indicator_col = 11
 player_ship.is_player_ship = true
 player_ship.control = function(self)
@@ -198,7 +198,7 @@ add(ships, player_ship)
 add(objects, player_ship)
 
 function make_bad_ship()
-	local bad_ship = make_ship(rnd(scene_width), rnd(max_y), start_dx)
+	local bad_ship = make_ship({ x = rnd(scene_width), y = rnd(max_y), dx = start_dx })
 	bad_ship.pal = function(self)
 		pal(5,2)
 		pal(7,8)
