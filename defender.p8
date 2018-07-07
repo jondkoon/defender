@@ -1,16 +1,16 @@
 pico-8 cartridge // http://www.pico-8.com
 version 16
 __lua__
+
 screen_width = 128
 half_screen_width = screen_width / 2
+scene_width = screen_width * 6
+
 screen_height = 128
-screen_vertical_margin = screen_height / 2
+scene_height = screen_height + screen_height / 2
+screen_vertical_margin = (scene_height - screen_height) / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
-
-scene_width = screen_width * 6
-max_x = scene_width / 2
-min_x = -(scene_width / 2)
 
 start_x = flr(screen_width / 3)
 start_y = 60
@@ -301,6 +301,8 @@ cam = {
 	x = player_ship.x - start_x,
 	y = start_y,
 	dx = 1,
+	max_x = scene_width - screen_width,
+	min_x = 0,
 	shake_counter = 0,
 	shake = function(self)
 		self.shake_counter = 10
@@ -309,17 +311,17 @@ cam = {
 		return x >= self.x and x <= self.x + screen_width
 	end,
 	update_screen_wrap = function(self)
-		if (self.x > max_x + screen_width) then
-			self.x = self.x  - scene_width
-		elseif (self.x < min_x - screen_width) then
-			self.x = self.x + scene_width
+		if (self.x > self.max_x) then
+			self.x = self.x  - self.max_x
+		elseif (self.x < self.min_x) then
+			self.x = self.x + self.max_x
 		end
 		for o in all(objects) do
-			if (self:in_view_x(o.x - scene_width) or self:in_view_x(o.x + o.width - scene_width)) then
-				o.x = o.x - scene_width
+			if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
+				o.x = o.x - self.max_x
 			end
-			if (self:in_view_x(o.x + scene_width) or self:in_view_x(o.x + o.width + scene_width)) then
-				o.x = o.x + scene_width
+			if (self:in_view_x(o.x + self.max_x) or self:in_view_x(o.x + o.width + self.max_x)) then
+				o.x = o.x + self.max_x
 			end
 		end
 	end,
@@ -365,9 +367,11 @@ cam = {
 
 		self:update_screen_wrap()
 	end,
+	x_offset = function(self)
+		return flr(player_ship.dx * 2)
+	end,
 	set = function(self)
-		local x_offset = flr(player_ship.dx * 2)
-		camera(self.x - x_offset + self.shake_x, self.y + self.shake_y)
+		camera(self.x - self:x_offset() + self.shake_x, self.y + self.shake_y)
 	end
 }
 
@@ -380,10 +384,29 @@ local x_printer = {
 		self.y = player_ship.y - 8
 	end,
 	draw = function(self)
-		print(cam.x, self.x, self.y)
+		print(player_ship.x, self.x, self.y)
 	end
 }
 -- add(objects, x_printer)
+
+mini_map_width = 128
+local mini_map = {
+	width = mini_map_width,
+	height = (mini_map_width * scene_height) / scene_width,
+	draw = function(self)
+		local x = cam.x - cam:x_offset()
+		local y = cam.y
+		rectfill(x, y, x + self.width, y + self.height, 0)
+
+		local p_x = player_ship.x * (self.width / scene_width)
+		local p_y = player_ship.y  * (self.height / max_y)
+		pset(x + p_x, y + p_y, 11)
+
+		local b_x = bad_ship.x * (self.width / scene_width)
+		local b_y = bad_ship.y  * (self.height / max_y)
+		pset(x + b_x, y + b_y, 8)
+	end
+}
 
 function _update60()
 	if (stop) then
@@ -404,6 +427,7 @@ function _draw()
 
 	cls(1)
 	cam:set()
+	mini_map:draw()
 	for object in all(objects) do
 		object:draw()
 	end
