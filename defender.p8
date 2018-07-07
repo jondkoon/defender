@@ -62,6 +62,8 @@ function make_ship(options)
 		y = options.y,
 		width = ship_width,
 		height = ship_height,
+		max_hp = options.hp,
+		hp = options.hp,
 		indicator_color = options.indicator_color,
 		is_player_ship = options.is_player_ship,
 		control = options.control,
@@ -92,8 +94,20 @@ function make_ship(options)
 				self.shot_delay -= 1
 			end
 		end,
+		destroy = function(self)
+			del(ships, self)
+			del(objects, self)
+		end,
 		check_hit = function(self, object)
 			self.hit = test_collision(self, object)
+			if (self.hit) then
+				self.hp -= 1
+			end
+
+			if (self.hp == 0 ) then
+				self:destroy()
+			end
+
 			return self.hit
 		end,
 		decel_y = function(self)
@@ -171,6 +185,19 @@ function make_ship(options)
 				end
 				spr(tail_sprite, self.x+tail_offset, self.y+y_offset, 1, 1, flip_x, flip_y)
 			end
+
+			local hp_offset = -2
+			local hp_ratio = self.hp / self.max_hp
+			local hp_full_width = self.width - 1
+			local hp_scaled_width = hp_full_width * hp_ratio
+			local hp_color = 3 -- green
+			if (hp_ratio < 0.5 or self.hp == 1) then
+				hp_color = 8 -- red
+			elseif (hp_ratio < 1) then
+				hp_color = 10 -- yellow
+			end
+			line(self.x, self.y + hp_offset, self.x + hp_scaled_width, self.y + hp_offset, hp_color)
+			-- print(self.hp, self.x, self.y - 8)
 		end
 	}
 	add(ships, ship)
@@ -182,6 +209,7 @@ player_ship = make_ship({
 	x = start_x,
 	y = start_y,
 	dx = start_dx,
+	hp = 5,
 	indicator_color = 11,
 	is_player_ship = true,
 	control = function(self)
@@ -210,6 +238,7 @@ function make_bad_ship()
 		x = rnd(scene_width),
 		y = rnd(max_y),
 		dx = start_dx,
+		hp = 2,
 		indicator_color = 8,
 		pal = function(self)
 			pal(5,2)
@@ -242,8 +271,10 @@ function make_bad_ship()
 	})
 end
 
-make_bad_ship()
-make_bad_ship()
+
+for i = 0, 0 do
+	make_bad_ship()
+end
 
 for i = 0, 50 + rnd(50) do
 	local star = {
