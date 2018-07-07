@@ -7,7 +7,7 @@ half_screen_width = screen_width / 2
 scene_width = screen_width * 6
 
 screen_height = 128
-scene_height = screen_height + screen_height / 2
+scene_height = screen_height + (screen_height / 2)
 screen_vertical_margin = (scene_height - screen_height) / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
@@ -399,11 +399,11 @@ local mini_map = {
 		rectfill(x, y, x + self.width, y + self.height, 0)
 
 		local p_x = player_ship.x * (self.width / scene_width)
-		local p_y = player_ship.y  * (self.height / max_y)
+		local p_y = (abs(min_y)  + player_ship.y ) * (self.height / scene_height)
 		pset(x + p_x, y + p_y, 11)
 
 		local b_x = bad_ship.x * (self.width / scene_width)
-		local b_y = bad_ship.y  * (self.height / max_y)
+		local b_y = (abs(min_y)  + bad_ship.y )  * (self.height / scene_height)
 		pset(x + b_x, y + b_y, 8)
 	end
 }
