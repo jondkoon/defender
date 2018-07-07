@@ -173,6 +173,7 @@ end
 
 ships = {}
 player_ship = make_ship(start_x, start_y, start_dx)
+player_ship.indicator_col = 11
 player_ship.is_player_ship = true
 player_ship.control = function(self)
 	if(btn(⬆️)) then
@@ -196,37 +197,42 @@ end
 add(ships, player_ship)
 add(objects, player_ship)
 
-bad_ship = make_ship(start_x+50, start_y, start_dx)
-bad_ship.pal = function(self)
-	pal(5,2)
-	pal(7,8)
-	pal(6,13)
-end
-bad_ship.control = function(self)
-	local desired_y = (player_ship.y + player_ship.dy)
-	local y_diff = (self.y + self.dy) - desired_y
-	if(abs(y_diff) <= 5) then
-		self:decel_y()
-	elseif (y_diff > 0) then
-		self:go_up()
-	else 
-		self:go_down()
+function make_bad_ship()
+	local bad_ship = make_ship(rnd(scene_width), rnd(max_y), start_dx)
+	bad_ship.pal = function(self)
+		pal(5,2)
+		pal(7,8)
+		pal(6,13)
 	end
+	bad_ship.indicator_col = 8
+	bad_ship.control = function(self)
+		local desired_y = (player_ship.y + player_ship.dy)
+		local y_diff = (self.y + self.dy) - desired_y
+		if(abs(y_diff) <= 5) then
+			self:decel_y()
+		elseif (y_diff > 0) then
+			self:go_up()
+		else
+			self:go_down()
+		end
 
-	local desired_x = (player_ship.x + player_ship.dx) - 20
-	local x_diff = (self.x + self.dx) - desired_x
-	if(x_diff > 10) then
-		self:go_left()
-	elseif (x_diff < -10) then
-		self:go_right()
-	end
+		local desired_x = (player_ship.x + player_ship.dx) - 20
+		local x_diff = (self.x + self.dx) - desired_x
+		if(x_diff > 10) then
+			self:go_left()
+		elseif (x_diff < -10) then
+			self:go_right()
+		end
 
-	if (rnd(1) > 0.5) then
-		self:fire()
+		if (rnd(1) > 0.5) then
+			self:fire()
+		end
 	end
+	add(ships, bad_ship)
+	add(objects, bad_ship)
 end
-add(ships, bad_ship)
-add(objects, bad_ship)
+make_bad_ship()
+make_bad_ship()
 
 for i = 0, 50 + rnd(50) do
 	local star = {
@@ -398,13 +404,11 @@ local mini_map = {
 		local y = cam.y
 		rectfill(x, y, x + self.width, y + self.height, 0)
 
-		local p_x = player_ship.x * (self.width / scene_width)
-		local p_y = (abs(min_y)  + player_ship.y ) * (self.height / scene_height)
-		pset(x + p_x, y + p_y, 11)
-
-		local b_x = bad_ship.x * (self.width / scene_width)
-		local b_y = (abs(min_y)  + bad_ship.y )  * (self.height / scene_height)
-		pset(x + b_x, y + b_y, 8)
+		for ship in all(ships) do
+			local ship_x = ship.x * (self.width / scene_width)
+			local ship_y = (abs(min_y)  + ship.y ) * (self.height / scene_height)
+			pset(x + ship_x, y + ship_y, ship.indicator_col)
+		end
 	end
 }
 
