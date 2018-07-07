@@ -96,6 +96,7 @@ function make_ship(options)
 			end
 		end,
 		destroy = function(self)
+			make_explosion(self.x + self.width / 2, self.y + self.height / 2)
 			del(ships, self)
 			del(objects, self)
 		end,
@@ -216,7 +217,7 @@ player_ship = make_ship({
 	x = start_x,
 	y = start_y,
 	dx = start_dx,
-	hp = 5,
+	hp = 10,
 	shot_color = 10,
 	indicator_color = 11,
 	is_player_ship = true,
@@ -246,7 +247,7 @@ function make_bad_ship()
 		x = rnd(scene_width),
 		y = rnd(max_y),
 		dx = start_dx,
-		hp = 10,
+		hp = 3,
 		shot_color = 8,
 		indicator_color = 8,
 		pal = function(self)
@@ -280,8 +281,41 @@ function make_bad_ship()
 	})
 end
 
-for i = 0, 0 do
+for i = 0, 5 do
 	make_bad_ship()
+end
+
+
+function make_explosion(x, y)
+	local make_particle = function(x, y)
+		local particle_colors = { 6, 7, 9, 10 }
+		local particle = {
+			x = x - 4 + flr(rnd(8)),
+			y = y - 4 + flr(rnd(8)),
+			width = 5 + flr(rnd(8)),
+			color = particle_colors[1 + flr(rnd(count(particle_colors)))],
+			counter = 10 + flr(rnd(10)),
+			dx = flr(rnd(3)) - 1.5,
+			dy = flr(rnd(3)) - 1.5,
+			dwidth = flr(rnd(3)) - 1.5,
+			update = function(self)
+				self.x += self.dx
+				self.y += self.dy
+				self.width += self.dwidth
+				self.counter -= 1
+				if (self.counter <= 0) then
+					del(objects, self)
+				end
+			end,
+			draw = function(self)
+				circfill(self.x, self.y, self.width / 2, self.color)
+			end
+		}
+		add(objects, particle)
+	end
+	for i = 0, 10 do
+		make_particle(x, y)
+	end
 end
 
 for i = 0, 50 + rnd(50) do
