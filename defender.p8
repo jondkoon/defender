@@ -246,7 +246,7 @@ function make_bad_ship()
 		x = rnd(scene_width),
 		y = rnd(max_y),
 		dx = start_dx,
-		hp = 2,
+		hp = 10,
 		shot_color = 8,
 		indicator_color = 8,
 		pal = function(self)
