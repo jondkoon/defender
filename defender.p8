@@ -62,7 +62,7 @@ function make_ship(options)
 		y = options.y,
 		width = ship_width,
 		height = ship_height,
-		indicator_col = options.indicator_col,
+		indicator_color = options.indicator_color,
 		is_player_ship = options.is_player_ship,
 		control = options.control,
 		pal = options.pal,
@@ -182,7 +182,7 @@ player_ship = make_ship({
 	x = start_x,
 	y = start_y,
 	dx = start_dx,
-	indicator_col = 11,
+	indicator_color = 11,
 	is_player_ship = true,
 	control = function(self)
 		if(btn(⬆️)) then
@@ -210,7 +210,7 @@ function make_bad_ship()
 		x = rnd(scene_width),
 		y = rnd(max_y),
 		dx = start_dx,
-		indicator_col = 8,
+		indicator_color = 8,
 		pal = function(self)
 			pal(5,2)
 			pal(7,8)
@@ -418,7 +418,7 @@ local mini_map = {
 		for ship in all(ships) do
 			local ship_x = ship.x * (self.width / scene_width)
 			local ship_y = (abs(min_y)  + ship.y ) * (self.height / scene_height)
-			pset(x + ship_x, y + ship_y, ship.indicator_col)
+			pset(x + ship_x, y + ship_y, ship.indicator_color)
 		end
 	end
 }
