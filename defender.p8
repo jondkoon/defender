@@ -4,7 +4,7 @@ __lua__
 
 screen_width = 128
 half_screen_width = screen_width / 2
-scene_width = screen_width * 6
+scene_width = screen_width * 10
 
 screen_height = 128
 scene_height = screen_height + (screen_height / 2)
@@ -64,6 +64,7 @@ function make_ship(options)
 		height = ship_height,
 		max_hp = options.hp,
 		hp = options.hp,
+		shot_color = options.shot_color,
 		indicator_color = options.indicator_color,
 		is_player_ship = options.is_player_ship,
 		control = options.control,
@@ -135,7 +136,9 @@ function make_ship(options)
 				make_shot({
 					x = self.x + (self.dx >= 0 and ship_width or 0),
 					y = self.y+ship_nose_offset,
-					dx = self.dx
+					dx = self.dx,
+					color = self.shot_color,
+					from_player = self.is_player_ship
 				})
 				self.fired = false
 			end
@@ -214,6 +217,7 @@ player_ship = make_ship({
 	y = start_y,
 	dx = start_dx,
 	hp = 5,
+	shot_color = 10,
 	indicator_color = 11,
 	is_player_ship = true,
 	control = function(self)
@@ -243,6 +247,7 @@ function make_bad_ship()
 		y = rnd(max_y),
 		dx = start_dx,
 		hp = 2,
+		shot_color = 8,
 		indicator_color = 8,
 		pal = function(self)
 			pal(5,2)
@@ -274,7 +279,6 @@ function make_bad_ship()
 		end	
 	})
 end
-
 
 for i = 0, 0 do
 	make_bad_ship()
@@ -310,6 +314,8 @@ function make_shot(options)
 	local width = 5 + rnd(10)
 	local shot = {
 		new = true,
+		from_player = options.from_player,
+		color = options.color,
 		x = options.dx < 0 and options.x - width or options.x,
 		y = options.y,
 		dx = options.dx < 0 and options.dx - 5 or options.dx + 5,
@@ -332,7 +338,7 @@ function make_shot(options)
 			end
 		end,
 		draw = function(self)
-			line(self.x, self.y, self.x+self.width, self.y, 10)
+			line(self.x, self.y, self.x+self.width, self.y, self.color)
 		end
 	}
 	add(shots, shot)
@@ -342,7 +348,7 @@ end
 function check_hits()
 	for shot in all(shots) do
 		for ship in all(ships) do
-			if (ship:check_hit(shot)) then
+			if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
 				shot:remove()
 			end
 		end
