@@ -157,7 +157,7 @@ function make_ship(options)
 			if (abs(self.dx) > 0) then
 				local sprite_start = 17
 				local sprite_end = sprite_start + 8
-				tail_sprite = min(sprite_end, sprite_start + (2 * flr(((abs(self.dx) - start_dx) / 0.4))))
+				tail_sprite = min(sprite_end, sprite_start + (2 * flr((abs(self.dx) * (self.max_dx)))))
 				if (tail_sprite == sprite_end) then
 					if (self.tail_blast_counter == 0 and flr(rnd(10)) == 1) then
 						self.tail_blast_counter = 5
