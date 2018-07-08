@@ -70,6 +70,7 @@ function make_ship(options)
 		control = options.control,
 		pal = options.pal,
 		tail_blast_counter = 0,
+		white_pal_counter = 0,
 		shot_delay = 0,
 		dx = options.dx,
 		dy = 0,
@@ -178,8 +179,13 @@ function make_ship(options)
 				else
 					sfx(1)
 				end
-				white_pal()
 				self.hit = false
+				self.white_pal_counter = 2
+			end
+
+			if (self.white_pal_counter > 0) then
+				self.white_pal_counter -= 1
+				white_pal()
 			elseif (self.pal) then
 				self:pal()
 			end
@@ -258,6 +264,10 @@ function make_bad_ship()
 			pal(6,13)
 		end,
 		control = function(self)
+			if (abs(self.x - player_ship.x) > screen_width) then
+				return
+			end
+
 			local desired_y = (player_ship.y + player_ship.dy)
 			local y_diff = (self.y + self.dy) - desired_y
 			if(abs(y_diff) <= 5) then
@@ -283,13 +293,14 @@ function make_bad_ship()
 	})
 end
 
-for i = 0, 3 do
+for i = 0, 8 do
 	make_bad_ship()
 end
 
 
 function make_explosion(x, y)
 	cam:shake()
+	sfx(3)
 	local make_particle = function(x, y)
 		local particle_colors = { 6, 7, 9, 10 }
 		local particle = {
@@ -586,3 +597,4 @@ __sfx__
 01100000330233e002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 011400001c44300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030000300000
 011400001c4731c445004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403
+010500002d6622d6622d6622c6622a652256521f652176520b6220360200602006020060200602006020060200602006020060200602006020060200602006020060200602006020060200602006020000200002
