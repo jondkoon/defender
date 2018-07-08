@@ -15,9 +15,9 @@ min_y = -screen_vertical_margin
 start_x = flr(screen_width / 3)
 start_y = 60
 baseline_dy = 0.5
-ship_max_dy = 5
+ship_max_dy = 3
 start_dx = 0.5
-ship_ddy = 0.15
+ship_ddy = 0.1
 ship_ddx = 0.3
 ship_decel = 0.5
 ship_nose_offset = 3
@@ -217,8 +217,8 @@ player_ship = make_ship({
 	x = start_x,
 	y = start_y,
 	dx = start_dx,
-	max_dx = 3,
-	hp = 10,
+	max_dx = 2,
+	hp = 20,
 	shot_color = 10,
 	indicator_color = 11,
 	is_player_ship = true,
@@ -248,7 +248,7 @@ function make_bad_ship()
 		x = rnd(scene_width),
 		y = rnd(max_y),
 		dx = start_dx,
-		max_dx = 2,
+		max_dx = 1,
 		hp = 3,
 		shot_color = 8,
 		indicator_color = 8,
@@ -283,12 +283,13 @@ function make_bad_ship()
 	})
 end
 
-for i = 0, 5 do
+for i = 0, 3 do
 	make_bad_ship()
 end
 
 
 function make_explosion(x, y)
+	cam:shake()
 	local make_particle = function(x, y)
 		local particle_colors = { 6, 7, 9, 10 }
 		local particle = {
@@ -367,7 +368,7 @@ function make_shot(options)
 				return
 			end
 
-			if ((self.x > cam.x + screen_width + half_screen_width) or (self.x < cam.x - half_screen_width)) then
+			if ((self.x > cam.x + screen_width) or (self.x < cam.x)) then
 				self:remove()
 			else
 				self.x += self.dx
