@@ -96,10 +96,13 @@ function make_ship(options)
 				self.shot_delay -= 1
 			end
 		end,
+		remove = function(self)
+			del(ships, self)
+			del(objects, self)		
+		end,
 		destroy = function(self)
 			make_explosion(self.x + self.width / 2, self.y + self.height / 2)
-			del(ships, self)
-			del(objects, self)
+			self:remove()
 		end,
 		check_hit = function(self, object)
 			self.hit = test_collision(self, object)
@@ -249,7 +252,7 @@ player_ship = make_ship({
 	end
 })
 
-function make_bad_ship()
+function make_bad_ship(player_ship)
 	local bad_ship = make_ship({ 
 		x = rnd(scene_width),
 		y = rnd(max_y),
@@ -293,10 +296,6 @@ function make_bad_ship()
 	})
 end
 
-for i = 0, 8 do
-	make_bad_ship()
-end
-
 function make_explosion(x, y)
 	cam:shake()
 	sfx(3)
@@ -331,28 +330,30 @@ function make_explosion(x, y)
 	end
 end
 
-for i = 0, 50 + rnd(50) do
-	local star = {
-		x = -half_screen_width + rnd(screen_width * 2),
-		y = -start_y + rnd(screen_width + (start_y * 2)),
-		width = 1,
-		update = function(self)
-			local x_start = cam.x
-			local x_end = x_start + screen_width
-			if (self.x < x_start - half_screen_width) then
-				self.x = x_end + rnd(half_screen_width)
-				self.y = -start_y + rnd(screen_width + (start_y * 2))
-			elseif (self.x > x_end + half_screen_width) then
-				self.x = x_start - rnd(half_screen_width)
-				self.y = -start_y + rnd(screen_width + (start_y * 2))
+function add_stars()
+	for i = 0, 50 + rnd(50) do
+		local star = {
+			x = -half_screen_width + rnd(screen_width * 2),
+			y = -start_y + rnd(screen_width + (start_y * 2)),
+			width = 1,
+			update = function(self)
+				local x_start = cam.x
+				local x_end = x_start + screen_width
+				if (self.x < x_start - half_screen_width) then
+					self.x = x_end + rnd(half_screen_width)
+					self.y = -start_y + rnd(screen_width + (start_y * 2))
+				elseif (self.x > x_end + half_screen_width) then
+					self.x = x_start - rnd(half_screen_width)
+					self.y = -start_y + rnd(screen_width + (start_y * 2))
+				end
+				self.width = min(2, player_ship.dx)
+			end,
+			draw = function(self)
+				line(self.x, self.y, self.x + self.width, self.y, 7)
 			end
-			self.width = min(2, player_ship.dx)
-		end,
-		draw = function(self)
-			line(self.x, self.y, self.x + self.width, self.y, 7)
-		end
-	}
-	add(objects, star)
+		}
+		add(objects, star)
+	end
 end
 
 shots = {}
@@ -402,97 +403,86 @@ function check_hits()
 	end
 end
 
-cam = {
-	x = player_ship.x - start_x,
-	y = start_y,
-	dx = 1,
-	max_x = scene_width - screen_width,
-	min_x = 0,
-	shake_counter = 0,
-	shake = function(self)
-		self.shake_counter = 10
-	end,
-	in_view_x = function(self, x)
-		return x >= self.x and x <= self.x + screen_width
-	end,
-	update_screen_wrap = function(self)
-		if (self.x > self.max_x) then
-			self.x = self.x  - self.max_x
-		elseif (self.x < self.min_x) then
-			self.x = self.x + self.max_x
-		end
-		for o in all(objects) do
-			if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
-				o.x = o.x - self.max_x
+function make_camera(player_ship)
+	cam = {
+		x = player_ship.x - start_x,
+		y = start_y,
+		dx = 1,
+		max_x = scene_width - screen_width,
+		min_x = 0,
+		shake_counter = 0,
+		shake = function(self)
+			self.shake_counter = 10
+		end,
+		in_view_x = function(self, x)
+			return x >= self.x and x <= self.x + screen_width
+		end,
+		update_screen_wrap = function(self)
+			if (self.x > self.max_x) then
+				self.x = self.x  - self.max_x
+			elseif (self.x < self.min_x) then
+				self.x = self.x + self.max_x
 			end
-			if (self:in_view_x(o.x + self.max_x) or self:in_view_x(o.x + o.width + self.max_x)) then
-				o.x = o.x + self.max_x
+			for o in all(objects) do
+				if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
+					o.x = o.x - self.max_x
+				end
+				if (self:in_view_x(o.x + self.max_x) or self:in_view_x(o.x + o.width + self.max_x)) then
+					o.x = o.x + self.max_x
+				end
 			end
+		end,
+		update = function(self)
+			if (self.shake_counter > 0) then
+				self.shake_counter -= 1
+				self.shake_x  = rnd(3)
+				self.shake_y  = rnd(3)
+			else
+				self.shake_x  = 0
+				self.shake_y  = 0
+			end
+
+			local desired_x = player_ship.x - start_x
+			if (player_ship.dx < 0) then
+				desired_x = player_ship.x - screen_width + start_x + ship_width
+			end
+
+			local diff = self.x - desired_x
+
+			if (abs(diff) < 1 or abs(diff) <= abs(player_ship.dx)) then
+				self.x = desired_x
+			elseif (diff < 0) then
+				self.x += self.dx
+			else
+				self.x -= self.dx
+			end
+
+			if (self.x != desired_x) then
+				self.dx = min(self.dx + 1, abs(player_ship.dx) + 2)
+			else
+				self.dx = 1
+			end
+
+			desired_y = player_ship.y-start_y
+			if (desired_y < min_y) then
+				self.y = min_y
+			elseif(desired_y > max_y - screen_height) then
+				self.y = max_y - screen_height
+			else
+				self.y = desired_y
+			end
+
+			self:update_screen_wrap()
+		end,
+		x_offset = function(self)
+			return flr(player_ship.dx * 2)
+		end,
+		set = function(self)
+			camera(self.x - self:x_offset() + self.shake_x, self.y + self.shake_y)
 		end
-	end,
-	update = function(self)
-		if (self.shake_counter > 0) then
-			self.shake_counter -= 1
-			self.shake_x  = rnd(3)
-			self.shake_y  = rnd(3)
-		else
-			self.shake_x  = 0
-			self.shake_y  = 0
-		end
-
-		local desired_x = player_ship.x - start_x
-		if (player_ship.dx < 0) then
-			desired_x = player_ship.x - screen_width + start_x + ship_width
-		end
-
-		local diff = self.x - desired_x
-
-		if (abs(diff) < 1 or abs(diff) <= abs(player_ship.dx)) then
-			self.x = desired_x
-		elseif (diff < 0) then
-			self.x += self.dx
-		else
-			self.x -= self.dx
-		end
-
-		if (self.x != desired_x) then
-			self.dx = min(self.dx + 1, abs(player_ship.dx) + 2)
-		else
-			self.dx = 1
-		end
-
-		desired_y = player_ship.y-start_y
-		if (desired_y < min_y) then
-			self.y = min_y
-		elseif(desired_y > max_y - screen_height) then
-			self.y = max_y - screen_height
-		else
-			self.y = desired_y
-		end
-
-		self:update_screen_wrap()
-	end,
-	x_offset = function(self)
-		return flr(player_ship.dx * 2)
-	end,
-	set = function(self)
-		camera(self.x - self:x_offset() + self.shake_x, self.y + self.shake_y)
-	end
-}
-
-local x_printer = {
-	x = 1,
-	y = 1,
-	width = 1,
-	update = function(self)
-		self.x = player_ship.x
-		self.y = player_ship.y - 8
-	end,
-	draw = function(self)
-		print(player_ship.x, self.x, self.y)
-	end
-}
--- add(objects, x_printer)
+	}
+end
+make_camera(player_ship)
 
 mini_map_width = 128
 local mini_map = {
@@ -525,18 +515,40 @@ local title = {
 	end
 }
 
--- add(objects, title)
+game_scene = {
+	init = function(self)
+		add_stars()
+		for i = 0, 8 do
+			make_bad_ship(player_ship)
+		end
+	end,
+	update = function(self)
+		check_hits()
+		for object in all(objects) do
+			object:update()
+		end
+		cam:update()
+	end,
+	draw = function(self)
+		cls(1)
+		cam:set()
+		mini_map:draw()
+		for object in all(objects) do
+			object:draw()
+		end
+	end
+}
+
+function _init()
+	game_scene:init()
+end
 
 function _update60()
 	if (stop) then
 		return
 	end
 
-	check_hits()
-	for object in all(objects) do
-		object:update()
-	end
-	cam:update()
+	game_scene:update()
 end
 
 function _draw()
@@ -544,12 +556,7 @@ function _draw()
 		return
 	end
 
-	cls(1)
-	cam:set()
-	mini_map:draw()
-	for object in all(objects) do
-		object:draw()
-	end
+	game_scene:draw()
 end
 __gfx__
 00000000066600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
