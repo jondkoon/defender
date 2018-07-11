@@ -297,7 +297,6 @@ for i = 0, 8 do
 	make_bad_ship()
 end
 
-
 function make_explosion(x, y)
 	cam:shake()
 	sfx(3)
@@ -379,7 +378,7 @@ function make_shot(options)
 				return
 			end
 
-			if ((self.x > cam.x + screen_width) or (self.x < cam.x)) then
+			if (not cam:in_view_x(self.x)) then
 				self:remove()
 			else
 				self.x += self.dx
