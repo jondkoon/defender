@@ -405,7 +405,7 @@ end
 
 function make_camera(player_ship)
 	cam = {
-		x = player_ship.x - start_x,
+		x = start_x,
 		y = start_y,
 		dx = 0,
 		dy = 0,
@@ -414,6 +414,9 @@ function make_camera(player_ship)
 		shake_counter = 0,
 		shake = function(self)
 			self.shake_counter = 10
+		end,
+		follow = function(self, following)
+			self.following = following
 		end,
 		in_view_x = function(self, x)
 			return x >= self.x and x <= self.x + screen_width
@@ -444,9 +447,12 @@ function make_camera(player_ship)
 			end
 		end,
 		update_follow = function(self)
-			local desired_x = player_ship.x - start_x
-			if (player_ship.dx < 0) then
-				desired_x = player_ship.x - screen_width + start_x + player_ship.width
+			if (not self.following) then
+				return
+			end
+			local desired_x = self.following.x - start_x
+			if (self.following.dx < 0) then
+				desired_x = self.following.x - screen_width + start_x + self.following.width
 			end
 
 			local diff = self.x - desired_x
@@ -454,7 +460,7 @@ function make_camera(player_ship)
 			if (abs(diff) <= 3) then
 				self.x = desired_x
 			else
-				self.dx = min(self.dx + 1, abs(player_ship.dx) + 2)
+				self.dx = min(self.dx + 1, abs(self.following.dx) + 2)
 				if (diff < 0) then
 					self.x += self.dx
 				else
@@ -462,7 +468,7 @@ function make_camera(player_ship)
 				end
 			end
 
-			desired_y = player_ship.y-start_y
+			desired_y = self.following.y-start_y
 			self.y = desired_y
 		end,
 		update = function(self)
@@ -478,14 +484,15 @@ function make_camera(player_ship)
 			self:update_screen_wrap()
 		end,
 		x_offset = function(self)
-			return flr(player_ship.dx * 2)
+			return self.following and flr(self.following.dx * 2) or 0
 		end,
 		set = function(self)
 			camera(self.x - self:x_offset() + self.shake_x, self.y + self.shake_y)
 		end
 	}
 end
-make_camera(player_ship)
+make_camera()
+cam:follow(player_ship)
 
 mini_map_width = 128
 local mini_map = {
