@@ -12,7 +12,7 @@ screen_vertical_margin = (scene_height - screen_height) / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-start_x = flr(screen_width / 3)
+start_x = flr(screen_width / 4)
 start_y = 60
 baseline_dy = 0.5
 ship_max_dy = 3
@@ -407,7 +407,8 @@ function make_camera(player_ship)
 	cam = {
 		x = player_ship.x - start_x,
 		y = start_y,
-		dx = 1,
+		dx = 0,
+		dy = 0,
 		max_x = scene_width - screen_width,
 		min_x = 0,
 		shake_counter = 0,
@@ -432,7 +433,7 @@ function make_camera(player_ship)
 				end
 			end
 		end,
-		update = function(self)
+		update_shake = function(self)
 			if (self.shake_counter > 0) then
 				self.shake_counter -= 1
 				self.shake_x  = rnd(3)
@@ -441,35 +442,37 @@ function make_camera(player_ship)
 				self.shake_x  = 0
 				self.shake_y  = 0
 			end
-
+		end,
+		update_follow = function(self)
 			local desired_x = player_ship.x - start_x
 			if (player_ship.dx < 0) then
-				desired_x = player_ship.x - screen_width + start_x + ship_width
+				desired_x = player_ship.x - screen_width + start_x + player_ship.width
 			end
 
 			local diff = self.x - desired_x
 
-			if (abs(diff) < 1 or abs(diff) <= abs(player_ship.dx)) then
+			if (abs(diff) <= 3) then
 				self.x = desired_x
-			elseif (diff < 0) then
-				self.x += self.dx
 			else
-				self.x -= self.dx
-			end
-
-			if (self.x != desired_x) then
 				self.dx = min(self.dx + 1, abs(player_ship.dx) + 2)
-			else
-				self.dx = 1
+				if (diff < 0) then
+					self.x += self.dx
+				else
+					self.x -= self.dx
+				end
 			end
 
 			desired_y = player_ship.y-start_y
-			if (desired_y < min_y) then
+			self.y = desired_y
+		end,
+		update = function(self)
+			self:update_shake()
+			self:update_follow()
+
+			if (self.y < min_y) then
 				self.y = min_y
-			elseif(desired_y > max_y - screen_height) then
+			elseif(self.y > max_y - screen_height) then
 				self.y = max_y - screen_height
-			else
-				self.y = desired_y
 			end
 
 			self:update_screen_wrap()
@@ -519,7 +522,7 @@ game_scene = {
 	init = function(self)
 		add_stars()
 		for i = 0, 8 do
-			make_bad_ship(player_ship)
+			-- make_bad_ship(player_ship)
 		end
 	end,
 	update = function(self)
