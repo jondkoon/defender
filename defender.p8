@@ -403,96 +403,93 @@ function check_hits()
 	end
 end
 
-function make_camera(player_ship)
-	cam = {
-		x = start_x,
-		y = start_y,
-		dx = 0,
-		dy = 0,
-		max_x = scene_width - screen_width,
-		min_x = 0,
-		shake_counter = 0,
-		shake = function(self)
-			self.shake_counter = 10
-		end,
-		follow = function(self, following)
-			self.following = following
-		end,
-		in_view_x = function(self, x)
-			return x >= self.x and x <= self.x + screen_width
-		end,
-		update_screen_wrap = function(self)
-			if (self.x > self.max_x) then
-				self.x = self.x  - self.max_x
-			elseif (self.x < self.min_x) then
-				self.x = self.x + self.max_x
-			end
-			for o in all(objects) do
-				if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
-					o.x = o.x - self.max_x
-				end
-				if (self:in_view_x(o.x + self.max_x) or self:in_view_x(o.x + o.width + self.max_x)) then
-					o.x = o.x + self.max_x
-				end
-			end
-		end,
-		update_shake = function(self)
-			if (self.shake_counter > 0) then
-				self.shake_counter -= 1
-				self.shake_x  = rnd(3)
-				self.shake_y  = rnd(3)
-			else
-				self.shake_x  = 0
-				self.shake_y  = 0
-			end
-		end,
-		update_follow = function(self)
-			if (not self.following) then
-				return
-			end
-			local desired_x = self.following.x - start_x
-			if (self.following.dx < 0) then
-				desired_x = self.following.x - screen_width + start_x + self.following.width
-			end
-
-			local diff = self.x - desired_x
-
-			if (abs(diff) <= 3) then
-				self.x = desired_x
-			else
-				self.dx = min(self.dx + 1, abs(self.following.dx) + 2)
-				if (diff < 0) then
-					self.x += self.dx
-				else
-					self.x -= self.dx
-				end
-			end
-
-			desired_y = self.following.y-start_y
-			self.y = desired_y
-		end,
-		update = function(self)
-			self:update_shake()
-			self:update_follow()
-
-			if (self.y < min_y) then
-				self.y = min_y
-			elseif(self.y > max_y - screen_height) then
-				self.y = max_y - screen_height
-			end
-
-			self:update_screen_wrap()
-		end,
-		x_offset = function(self)
-			return self.following and flr(self.following.dx * 2) or 0
-		end,
-		set = function(self)
-			camera(self.x - self:x_offset() + self.shake_x, self.y + self.shake_y)
+cam = {
+	x = start_x,
+	y = start_y,
+	dx = 0,
+	dy = 0,
+	max_x = scene_width - screen_width,
+	min_x = 0,
+	shake_counter = 0,
+	shake = function(self)
+		self.shake_counter = 10
+	end,
+	follow = function(self, following, follow_offset)
+		self.following = following
+		self.follow_offset = follow_offset
+	end,
+	in_view_x = function(self, x)
+		return x >= self.x and x <= self.x + screen_width
+	end,
+	update_screen_wrap = function(self)
+		if (self.x > self.max_x) then
+			self.x = self.x  - self.max_x
+		elseif (self.x < self.min_x) then
+			self.x = self.x + self.max_x
 		end
-	}
-end
-make_camera()
-cam:follow(player_ship)
+		for o in all(objects) do
+			if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
+				o.x = o.x - self.max_x
+			end
+			if (self:in_view_x(o.x + self.max_x) or self:in_view_x(o.x + o.width + self.max_x)) then
+				o.x = o.x + self.max_x
+			end
+		end
+	end,
+	update_shake = function(self)
+		if (self.shake_counter > 0) then
+			self.shake_counter -= 1
+			self.shake_x  = rnd(3)
+			self.shake_y  = rnd(3)
+		else
+			self.shake_x  = 0
+			self.shake_y  = 0
+		end
+	end,
+	update_follow = function(self)
+		if (not self.following) then
+			return
+		end
+		local desired_x = self.following.x - self.follow_offset
+		if (self.following.dx < 0) then
+			desired_x = self.following.x - screen_width + self.follow_offset + self.following.width
+		end
+
+		local diff = self.x - desired_x
+
+		if (abs(diff) <= 3) then
+			self.x = desired_x
+		else
+			self.dx = min(self.dx + 1, abs(self.following.dx) + 2)
+			if (diff < 0) then
+				self.x += self.dx
+			else
+				self.x -= self.dx
+			end
+		end
+
+		desired_y = self.following.y-start_y
+		self.y = desired_y
+	end,
+	update = function(self)
+		self:update_shake()
+		self:update_follow()
+
+		if (self.y < min_y) then
+			self.y = min_y
+		elseif(self.y > max_y - screen_height) then
+			self.y = max_y - screen_height
+		end
+
+		self:update_screen_wrap()
+	end,
+	x_offset = function(self)
+		return self.following and flr(self.following.dx * 2) or 0
+	end,
+	set = function(self)
+		camera(self.x - self:x_offset() + self.shake_x, self.y + self.shake_y)
+	end
+}
 
 mini_map_width = 128
 local mini_map = {
@@ -527,6 +524,8 @@ local title = {
 
 game_scene = {
 	init = function(self)
+		cam.x = player_ship.x - start_x
+		cam:follow(player_ship, start_x)
 		add_stars()
 		for i = 0, 8 do
 			-- make_bad_ship(player_ship)
