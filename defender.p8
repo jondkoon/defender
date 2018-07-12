@@ -509,14 +509,10 @@ local mini_map = {
 }
 
 local title = {
-	x = cam.x + 18,
-	y = cam.y + 8,
+	x = 18,
+	y = 8,
 	width = 11 * 8,
 	height = 5 * 8,
-	update = function(self)
-		self.x = cam.x - cam:x_offset() + 18
-		self.y = cam.y + 8
-	end,
 	draw = function(self)
 		spr(181, self.x, self.y, self.width / 8, self.height / 8)
 	end
