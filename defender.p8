@@ -486,17 +486,17 @@ make_camera(player_ship)
 
 mini_map_width = 128
 local mini_map = {
+	x = 0,
+	y = 0,
 	width = mini_map_width,
 	height = (mini_map_width * scene_height) / scene_width,
 	draw = function(self)
-		local x = cam.x - cam:x_offset()
-		local y = cam.y
-		rectfill(x, y, x + self.width, y + self.height, 0)
+		rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 0)
 
 		for ship in all(ships) do
 			local ship_x = ship.x * (self.width / scene_width)
 			local ship_y = (abs(min_y)  + ship.y ) * (self.height / scene_height)
-			pset(x + ship_x, y + ship_y, ship.indicator_color)
+			pset(self.x + ship_x, self.y + ship_y, ship.indicator_color)
 		end
 	end
 }
@@ -531,8 +531,9 @@ game_scene = {
 	end,
 	draw = function(self)
 		cls(1)
-		cam:set()
+		camera()
 		mini_map:draw()
+		cam:set()
 		for object in all(objects) do
 			object:draw()
 		end
