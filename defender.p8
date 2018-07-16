@@ -13,14 +13,6 @@ screen_vertical_margin = (scene_height - screen_height) / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-baseline_dy = 0.5
-ship_ddy = 0.1
-ship_ddx = 0.3
-ship_decel = 0.5
-ship_nose_offset = 3
-ship_height = 7
-ship_width = 8
-
 objects = {}
 
 sound_on = true
@@ -53,11 +45,17 @@ end
 
 ships = {}
 function make_ship(options)
+	local baseline_dy = 0.5
+	local ship_ddy = 0.1
+	local ship_ddx = 0.3
+	local ship_decel = 0.5
+	local ship_nose_offset = 3
+
 	local ship = {
 		x = options.x,
 		y = options.y,
-		width = ship_width,
-		height = ship_height,
+		width = 8,
+		height = 7,
 		max_hp = options.hp,
 		max_dx = options.max_dx,
 		max_dy = 3,
@@ -128,16 +126,16 @@ function make_ship(options)
 			self.y += self.dy
 			self.x += self.dx
 			
-			if (self.y > max_y - ship_height) then
+			if (self.y > max_y - self.height) then
 				self.dy = max(-3, self.dy * -1)
-				self.y = max_y - ship_height
+				self.y = max_y - self.height
 			elseif (self.y < min_y) then
 				self.dy = min(3, self.dy * -1)
 				self.y = min_y
 			end
 			if (self.fired) then
 				make_shot({
-					x = self.x + (self.dx >= 0 and ship_width or 0),
+					x = self.x + (self.dx >= 0 and self.width or 0),
 					y = self.y+ship_nose_offset,
 					dx = self.dx,
 					color = self.shot_color,
@@ -222,7 +220,7 @@ end
 
 player_ship = make_ship({
 	x = 0,
-	y = half_screen_height - ship_height,
+	y = 0,
 	dx = 0.5,
 	max_dx = 2,
 	hp = 20,
@@ -249,6 +247,7 @@ player_ship = make_ship({
 		end
 	end
 })
+player_ship.y = half_screen_height - player_ship.height
 
 function make_bad_ship(player_ship)
 	local bad_ship = make_ship({ 
