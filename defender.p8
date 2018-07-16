@@ -223,7 +223,7 @@ function make_ship(options)
 end
 
 player_ship = make_ship({
-	x = start_x,
+	x = 0,
 	y = start_y,
 	dx = start_dx,
 	max_dx = 2,
@@ -331,20 +331,24 @@ function make_explosion(x, y)
 end
 
 function add_stars()
+	local choose_y = function()
+		return min_y + rnd(abs(min_y) + max_y)
+	end
+
 	for i = 0, 50 + rnd(50) do
 		local star = {
 			x = -half_screen_width + rnd(screen_width * 2),
-			y = -start_y + rnd(screen_width + (start_y * 2)),
+			y = choose_y(),
 			width = 1,
 			update = function(self)
 				local x_start = cam.x
 				local x_end = x_start + screen_width
 				if (self.x < x_start - half_screen_width) then
 					self.x = x_end + rnd(half_screen_width)
-					self.y = -start_y + rnd(screen_width + (start_y * 2))
+					self.y = choose_y()
 				elseif (self.x > x_end + half_screen_width) then
 					self.x = x_start - rnd(half_screen_width)
-					self.y = -start_y + rnd(screen_width + (start_y * 2))
+					self.y = choose_y()
 				end
 				self.width = min(2, player_ship.dx)
 			end,
