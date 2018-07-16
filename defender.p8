@@ -7,13 +7,12 @@ half_screen_width = screen_width / 2
 scene_width = screen_width * 10
 
 screen_height = 128
-scene_height = screen_height + (screen_height / 2)
+half_screen_height = screen_height / 2
+scene_height = screen_height + half_screen_height
 screen_vertical_margin = (scene_height - screen_height) / 2
 max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
-start_x = flr(screen_width / 4)
-start_y = 60
 baseline_dy = 0.5
 ship_max_dy = 3
 start_dx = 0.5
@@ -224,7 +223,7 @@ end
 
 player_ship = make_ship({
 	x = 0,
-	y = start_y,
+	y = half_screen_height - ship_height,
 	dx = start_dx,
 	max_dx = 2,
 	hp = 20,
@@ -408,8 +407,8 @@ function check_hits()
 end
 
 cam = {
-	x = start_x,
-	y = start_y,
+	x = 0,
+	y = 0,
 	dx = 0,
 	dy = 0,
 	max_x = scene_width - screen_width,
@@ -418,9 +417,9 @@ cam = {
 	shake = function(self)
 		self.shake_counter = 10
 	end,
-	follow = function(self, following, follow_offset)
+	follow = function(self, following, follow_x_offset)
 		self.following = following
-		self.follow_offset = follow_offset
+		self.follow_x_offset = follow_x_offset
 	end,
 	in_view_x = function(self, x)
 		return x >= self.x and x <= self.x + screen_width
@@ -454,9 +453,9 @@ cam = {
 		if (not self.following) then
 			return
 		end
-		local desired_x = self.following.x - self.follow_offset
+		local desired_x = self.following.x - self.follow_x_offset
 		if (self.following.dx < 0) then
-			desired_x = self.following.x - screen_width + self.follow_offset + self.following.width
+			desired_x = self.following.x - screen_width + self.follow_x_offset + self.following.width
 		end
 
 		local diff = self.x - desired_x
@@ -472,7 +471,7 @@ cam = {
 			end
 		end
 
-		desired_y = self.following.y-start_y
+		desired_y = self.following.y-half_screen_height
 		self.y = desired_y
 	end,
 	update = function(self)
@@ -524,8 +523,9 @@ local title = {
 
 game_scene = {
 	init = function(self)
-		cam.x = player_ship.x - start_x
-		cam:follow(player_ship, start_x)
+		local x_offset = flr(screen_width / 4)
+		player_ship.x = x_offset
+		cam:follow(player_ship, x_offset)
 		add_stars()
 		for i = 0, 8 do
 			-- make_bad_ship(player_ship)
