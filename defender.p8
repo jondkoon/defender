@@ -14,8 +14,6 @@ max_y = screen_height + screen_vertical_margin
 min_y = -screen_vertical_margin
 
 baseline_dy = 0.5
-ship_max_dy = 3
-start_dx = 0.5
 ship_ddy = 0.1
 ship_ddx = 0.3
 ship_decel = 0.5
@@ -62,6 +60,7 @@ function make_ship(options)
 		height = ship_height,
 		max_hp = options.hp,
 		max_dx = options.max_dx,
+		max_dy = 3,
 		hp = options.hp,
 		shot_color = options.shot_color,
 		indicator_color = options.indicator_color,
@@ -81,11 +80,11 @@ function make_ship(options)
 		end,
 		go_up = function(self)
 				self.dy = self.dy or -baseline_dy
-				self.dy = max(self.dy - ship_ddy, -ship_max_dy)
+				self.dy = max(self.dy - ship_ddy, -self.max_dy)
 		end,
 		go_down = function(self)
 				self.dy = self.dy or baseline_dy
-				self.dy = min(self.dy + ship_ddy, ship_max_dy)
+				self.dy = min(self.dy + ship_ddy, self.max_dy)
 		end,
 		fire = function(self)
 			if (self.shot_delay == 0) then
@@ -224,7 +223,7 @@ end
 player_ship = make_ship({
 	x = 0,
 	y = half_screen_height - ship_height,
-	dx = start_dx,
+	dx = 0.5,
 	max_dx = 2,
 	hp = 20,
 	shot_color = 10,
@@ -255,7 +254,7 @@ function make_bad_ship(player_ship)
 	local bad_ship = make_ship({ 
 		x = rnd(scene_width),
 		y = rnd(max_y),
-		dx = start_dx,
+		dx = 0.5,
 		max_dx = 1,
 		hp = 3,
 		shot_color = 8,
