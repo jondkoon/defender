@@ -8,11 +8,10 @@ half_screen_width = screen_width / 2
 screen_height = 128
 half_screen_height = screen_height / 2
 
-scene_width = screen_width * 10
-scene_height = screen_height + half_screen_height
-
-min_y = 0
-max_y = scene_height
+scene = {
+	height = screen_height + half_screen_height,
+	width = screen_width * 10
+}
 
 objects = {}
 
@@ -127,12 +126,12 @@ function make_ship(options)
 			self.y += self.dy
 			self.x += self.dx
 			
-			if (self.y > max_y - self.height) then
+			if (self.y > scene.height - self.height) then
 				self.dy = max(-3, self.dy * -1)
-				self.y = max_y - self.height
-			elseif (self.y < min_y) then
+				self.y = scene.height - self.height
+			elseif (self.y < 0) then
 				self.dy = min(3, self.dy * -1)
-				self.y = min_y
+				self.y = 0
 			end
 			if (self.fired) then
 				make_shot({
@@ -248,12 +247,12 @@ player_ship = make_ship({
 		end
 	end
 })
-player_ship.y = (scene_height / 2) - player_ship.height
+player_ship.y = (scene.height / 2) - player_ship.height
 
 function make_bad_ship(player_ship)
 	local bad_ship = make_ship({ 
-		x = rnd(scene_width),
-		y = rnd(max_y),
+		x = rnd(scene.width),
+		y = rnd(scene.height),
 		dx = 0.5,
 		max_dx = 1,
 		hp = 3,
@@ -330,7 +329,7 @@ end
 
 function add_stars()
 	local choose_y = function()
-		return rnd(scene_height)
+		return rnd(scene.height)
 	end
 
 	for i = 0, 50 + rnd(50) do
@@ -410,8 +409,7 @@ cam = {
 	y = 0,
 	dx = 0,
 	dy = 0,
-	max_x = scene_width - screen_width,
-	min_x = 0,
+	max_x = scene.width - screen_width,
 	shake_counter = 0,
 	shake = function(self)
 		self.shake_counter = 10
@@ -426,7 +424,7 @@ cam = {
 	update_screen_wrap = function(self)
 		if (self.x > self.max_x) then
 			self.x = self.x  - self.max_x
-		elseif (self.x < self.min_x) then
+		elseif (self.x < 0) then
 			self.x = self.x + self.max_x
 		end
 		for o in all(objects) do
@@ -477,10 +475,10 @@ cam = {
 		self:update_shake()
 		self:update_follow()
 
-		if (self.y < min_y) then
-			self.y = min_y
-		elseif(self.y > max_y - screen_height) then
-			self.y = max_y - screen_height
+		if (self.y < 0) then
+			self.y = 0
+		elseif(self.y > scene.height - screen_height) then
+			self.y = scene.height - screen_height
 		end
 
 		self:update_screen_wrap()
@@ -498,13 +496,13 @@ local mini_map = {
 	x = 0,
 	y = 0,
 	width = mini_map_width,
-	height = (mini_map_width * scene_height) / scene_width,
+	height = (mini_map_width * scene.height) / scene.width,
 	draw = function(self)
 		rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 0)
 
 		for ship in all(ships) do
-			local ship_x = ship.x * (self.width / scene_width)
-			local ship_y = ship.y * (self.height / scene_height)
+			local ship_x = ship.x * (self.width / scene.width)
+			local ship_y = ship.y * (self.height / scene.height)
 			pset(self.x + ship_x, self.y + ship_y, ship.indicator_color)
 		end
 	end
