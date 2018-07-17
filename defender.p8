@@ -8,11 +8,6 @@ half_screen_width = screen_width / 2
 screen_height = 128
 half_screen_height = screen_height / 2
 
-scene = {
-	height = screen_height + half_screen_height,
-	width = screen_width * 10
-}
-
 objects = {}
 
 sound_on = true
@@ -56,6 +51,7 @@ function make_ship(options)
 		y = options.y,
 		width = 8,
 		height = 7,
+		scene = options.scene,
 		max_hp = options.hp,
 		max_dx = options.max_dx,
 		max_dy = 3,
@@ -126,9 +122,9 @@ function make_ship(options)
 			self.y += self.dy
 			self.x += self.dx
 			
-			if (self.y > scene.height - self.height) then
+			if (self.y > self.scene.height - self.height) then
 				self.dy = max(-3, self.dy * -1)
-				self.y = scene.height - self.height
+				self.y = self.scene.height - self.height
 			elseif (self.y < 0) then
 				self.dy = min(3, self.dy * -1)
 				self.y = 0
@@ -218,41 +214,46 @@ function make_ship(options)
 	return ship
 end
 
-player_ship = make_ship({
-	x = 0,
-	y = 0,
-	dx = 0.5,
-	max_dx = 2,
-	hp = 20,
-	shot_color = 10,
-	indicator_color = 11,
-	is_player_ship = true,
-	control = function(self)
-		if(btn(⬆️)) then
-			self:go_up()
-		elseif(btn(⬇️)) then
-			self:go_down()
-		else
-			self:decel_y()
-		end
-		
-		if (btn(➡️)) then
-			self:go_right()
-		elseif (btn(⬅️)) then
-			self:go_left()
-		end
+function make_player_ship(scene)
+	local player_ship = make_ship({
+		x = 0,
+		y = 0,
+		scene = scene,
+		dx = 0.5,
+		max_dx = 2,
+		hp = 20,
+		shot_color = 10,
+		indicator_color = 11,
+		is_player_ship = true,
+		control = function(self)
+			if(btn(⬆️)) then
+				self:go_up()
+			elseif(btn(⬇️)) then
+				self:go_down()
+			else
+				self:decel_y()
+			end
+			
+			if (btn(➡️)) then
+				self:go_right()
+			elseif (btn(⬅️)) then
+				self:go_left()
+			end
 
-		if (btn(🅾️)) then
-			self:fire()
+			if (btn(🅾️)) then
+				self:fire()
+			end
 		end
-	end
-})
-player_ship.y = (scene.height / 2) - player_ship.height
+	})
+	player_ship.y = (scene.height / 2) - player_ship.height
+	return player_ship
+end
 
-function make_bad_ship(player_ship)
+function make_bad_ship(player_ship, scene)
 	local bad_ship = make_ship({ 
 		x = rnd(scene.width),
 		y = rnd(scene.height),
+		scene = scene,
 		dx = 0.5,
 		max_dx = 1,
 		hp = 3,
@@ -327,7 +328,7 @@ function make_explosion(x, y)
 	end
 end
 
-function add_stars()
+function add_stars(track, scene)
 	local choose_y = function()
 		return rnd(scene.height)
 	end
@@ -347,7 +348,7 @@ function add_stars()
 					self.x = x_start - rnd(half_screen_width)
 					self.y = choose_y()
 				end
-				self.width = min(2, player_ship.dx)
+				self.width = min(2, track.dx)
 			end,
 			draw = function(self)
 				line(self.x, self.y, self.x + self.width, self.y, 7)
@@ -409,7 +410,13 @@ cam = {
 	y = 0,
 	dx = 0,
 	dy = 0,
-	max_x = scene.width - screen_width,
+	max_x = screen_width,
+	max_y = 0,
+	set_scene = function(self, scene)
+		self.scene = scene
+		self.max_x = scene.width - screen_width
+		self.max_y = scene.height - screen_height
+	end,
 	shake_counter = 0,
 	shake = function(self)
 		self.shake_counter = 10
@@ -477,8 +484,8 @@ cam = {
 
 		if (self.y < 0) then
 			self.y = 0
-		elseif(self.y > scene.height - screen_height) then
-			self.y = scene.height - screen_height
+		elseif(self.y > self.max_y) then
+			self.y = self.max_y
 		end
 
 		self:update_screen_wrap()
@@ -491,22 +498,25 @@ cam = {
 	end
 }
 
-mini_map_width = 128
-local mini_map = {
-	x = 0,
-	y = 0,
-	width = mini_map_width,
-	height = (mini_map_width * scene.height) / scene.width,
-	draw = function(self)
-		rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 0)
+function make_mini_map(scene)
+	local mini_map_width = 128
+	local mini_map = {
+		x = 0,
+		y = 0,
+		width = mini_map_width,
+		height = (mini_map_width * scene.height) / scene.width,
+		draw = function(self)
+			rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 0)
 
-		for ship in all(ships) do
-			local ship_x = ship.x * (self.width / scene.width)
-			local ship_y = ship.y * (self.height / scene.height)
-			pset(self.x + ship_x, self.y + ship_y, ship.indicator_color)
+			for ship in all(ships) do
+				local ship_x = ship.x * (self.width / scene.width)
+				local ship_y = ship.y * (self.height / scene.height)
+				pset(self.x + ship_x, self.y + ship_y, ship.indicator_color)
+			end
 		end
-	end
-}
+	}
+	return mini_map
+end
 
 local title = {
 	x = 18,
@@ -519,13 +529,18 @@ local title = {
 }
 
 game_scene = {
+	height = screen_height + half_screen_height,
+	width = screen_width * 10,
 	init = function(self)
+		cam:set_scene(self)
+		local player_ship = make_player_ship(self)
+		self.mini_map = make_mini_map(self)
 		local x_offset = flr(screen_width / 4)
 		player_ship.x = x_offset
 		cam:follow(player_ship, x_offset)
-		add_stars()
+		add_stars(player_ship, self)
 		for i = 0, 8 do
-			-- make_bad_ship(player_ship)
+			make_bad_ship(player_ship, self)
 		end
 	end,
 	update = function(self)
@@ -537,8 +552,8 @@ game_scene = {
 	end,
 	draw = function(self)
 		cls(1)
-		camera()
-		mini_map:draw()
+		camera() -- reset camera to draw the mini map in a fixed position
+		self.mini_map:draw()
 		cam:set()
 		for object in all(objects) do
 			object:draw()
