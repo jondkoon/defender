@@ -4,14 +4,15 @@ __lua__
 
 screen_width = 128
 half_screen_width = screen_width / 2
-scene_width = screen_width * 10
 
 screen_height = 128
 half_screen_height = screen_height / 2
+
+scene_width = screen_width * 10
 scene_height = screen_height + half_screen_height
-screen_vertical_margin = (scene_height - screen_height) / 2
-max_y = screen_height + screen_vertical_margin
-min_y = -screen_vertical_margin
+
+min_y = 0
+max_y = scene_height
 
 objects = {}
 
@@ -247,7 +248,7 @@ player_ship = make_ship({
 		end
 	end
 })
-player_ship.y = half_screen_height - player_ship.height
+player_ship.y = (scene_height / 2) - player_ship.height
 
 function make_bad_ship(player_ship)
 	local bad_ship = make_ship({ 
@@ -329,7 +330,7 @@ end
 
 function add_stars()
 	local choose_y = function()
-		return min_y + rnd(abs(min_y) + max_y)
+		return rnd(scene_height)
 	end
 
 	for i = 0, 50 + rnd(50) do
@@ -503,7 +504,7 @@ local mini_map = {
 
 		for ship in all(ships) do
 			local ship_x = ship.x * (self.width / scene_width)
-			local ship_y = (abs(min_y)  + ship.y ) * (self.height / scene_height)
+			local ship_y = ship.y * (self.height / scene_height)
 			pset(self.x + ship_x, self.y + ship_y, ship.indicator_color)
 		end
 	end
