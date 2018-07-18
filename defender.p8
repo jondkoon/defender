@@ -90,22 +90,13 @@ function make_ship(options)
 		end,
 		remove = function(self)
 			del(ships, self)
-			del(objects, self)		
-		end,
-		destroy = function(self)
-			make_explosion(self.x + self.width / 2, self.y + self.height / 2)
-			self:remove()
+			del(objects, self)
 		end,
 		check_hit = function(self, object)
 			self.hit = test_collision(self, object)
 			if (self.hit) then
 				self.hp -= 1
 			end
-
-			if (self.hp == 0 ) then
-				self:destroy()
-			end
-
 			return self.hit
 		end,
 		decel_y = function(self)
@@ -400,6 +391,11 @@ function check_hits()
 		for ship in all(ships) do
 			if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
 				shot:remove()
+				if (ship.hp == 0 ) then
+					make_explosion(ship.x + ship.width / 2, ship.y + ship.height / 2)
+					del(ships, ship)
+					del(objects, ship)
+				end
 			end
 		end
 	end
