@@ -8,8 +8,6 @@ half_screen_width = screen_width / 2
 screen_height = 128
 half_screen_height = screen_height / 2
 
-objects = {}
-
 sound_on = true
 stop = false
 _sfx = sfx
@@ -278,7 +276,7 @@ function make_bad_ship(player_ship, scene)
 	})
 end
 
-function make_explosion(x, y)
+function make_explosion(scene, x, y)
 	cam:shake()
 	sfx(3)
 	local make_particle = function(x, y)
@@ -298,14 +296,14 @@ function make_explosion(x, y)
 				self.width += self.dwidth
 				self.counter -= 1
 				if (self.counter <= 0) then
-					del(objects, self)
+					scene:remove(self)
 				end
 			end,
 			draw = function(self)
 				circfill(self.x, self.y, self.width / 2, self.color)
 			end
 		}
-		add(objects, particle)
+		scene:add(particle)
 	end
 	for i = 0, 10 do
 		make_particle(x, y)
@@ -338,7 +336,7 @@ function add_stars(track, scene)
 				line(self.x, self.y, self.x + self.width, self.y, 7)
 			end
 		}
-		add(objects, star)
+		scene:add(star)
 	end
 end
 
@@ -371,7 +369,7 @@ cam = {
 		elseif (self.x < 0) then
 			self.x = self.x + self.max_x
 		end
-		for o in all(objects) do
+		for o in all(self.scene.objects) do
 			if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
 				o.x = o.x - self.max_x
 			end
@@ -466,15 +464,16 @@ local title = {
 }
 
 game_scene = {
+	objects = {},
 	ships = {},
 	shots = {},
 	height = screen_height + half_screen_height,
 	width = screen_width * 10,
 	add = function(self, object)
-		add(objects, object)
+		add(self.objects, object)
 	end,
 	remove = function(self, object)
-		del(objects, object)
+		del(self.objects, object)
 	end,
 	add_shot = function(self, shot)
 		add(self.shots, shot)
@@ -498,7 +497,7 @@ game_scene = {
 				if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
 					self:remove_shot(shot)
 					if (ship.hp == 0 ) then
-						make_explosion(ship.x + ship.width / 2, ship.y + ship.height / 2)
+						make_explosion(self, ship.x + ship.width / 2, ship.y + ship.height / 2)
 						self:remove_ship(ship)
 					end
 				end
@@ -551,7 +550,7 @@ game_scene = {
 	end,
 	update = function(self)
 		self:check_hits()
-		for object in all(objects) do
+		for object in all(self.objects) do
 			object:update()
 		end
 		cam:update()
@@ -561,7 +560,7 @@ game_scene = {
 		camera() -- reset camera to draw the mini map in a fixed position
 		self.mini_map:draw()
 		cam:set()
-		for object in all(objects) do
+		for object in all(self.objects) do
 			object:draw()
 		end
 	end
