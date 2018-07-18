@@ -116,7 +116,7 @@ function make_ship(options)
 				self.y = 0
 			end
 			if (self.fired) then
-				make_shot({
+				self.scene:make_shot({
 					x = self.x + (self.dx >= 0 and self.width or 0),
 					y = self.y+ship_nose_offset,
 					dx = self.dx,
@@ -342,43 +342,6 @@ function add_stars(track, scene)
 	end
 end
 
-shots = {}
-function make_shot(options)
-	sfx(0)
-	local width = 5 + rnd(10)
-	local shot = {
-		new = true,
-		from_player = options.from_player,
-		color = options.color,
-		x = options.dx < 0 and options.x - width or options.x,
-		y = options.y,
-		dx = options.dx < 0 and options.dx - 5 or options.dx + 5,
-		width = width,
-		height = 1,
-		remove = function(self)
-			del(shots,self)
-			del(objects,self)
-		end,
-		update = function(self)
-			if (self.new) then
-				self.new = false
-				return
-			end
-
-			if (not cam:in_view_x(self.x)) then
-				self:remove()
-			else
-				self.x += self.dx
-			end
-		end,
-		draw = function(self)
-			line(self.x, self.y, self.x+self.width, self.y, self.color)
-		end
-	}
-	add(shots, shot)
-	add(objects, shot)
-end
-
 cam = {
 	x = 0,
 	y = 0,
@@ -504,6 +467,7 @@ local title = {
 
 game_scene = {
 	ships = {},
+	shots = {},
 	height = screen_height + half_screen_height,
 	width = screen_width * 10,
 	add = function(self, object)
@@ -511,6 +475,14 @@ game_scene = {
 	end,
 	remove = function(self, object)
 		del(objects, object)
+	end,
+	add_shot = function(self, shot)
+		add(self.shots, shot)
+		self:add(shot)
+	end,
+	remove_shot = function(self, shot)
+		del(self.shots, shot)
+		self:remove(shot)
 	end,
 	add_ship = function(self, ship)
 		add(self.ships, ship)
@@ -521,10 +493,10 @@ game_scene = {
 		self:remove(ship)
 	end,
 	check_hits = function(self)
-		for shot in all(shots) do
+		for shot in all(self.shots) do
 			for ship in all(self.ships) do
 				if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
-					shot:remove()
+					self:remove_shot(shot)
 					if (ship.hp == 0 ) then
 						make_explosion(ship.x + ship.width / 2, ship.y + ship.height / 2)
 						self:remove_ship(ship)
@@ -532,6 +504,36 @@ game_scene = {
 				end
 			end
 		end
+	end,
+	make_shot = function(scene, options)
+		sfx(0)
+		local width = 5 + rnd(10)
+		local shot = {
+			new = true,
+			from_player = options.from_player,
+			color = options.color,
+			x = options.dx < 0 and options.x - width or options.x,
+			y = options.y,
+			dx = options.dx < 0 and options.dx - 5 or options.dx + 5,
+			width = width,
+			height = 1,
+			update = function(self)
+				if (self.new) then
+					self.new = false
+					return
+				end
+
+				if (not cam:in_view_x(self.x)) then
+					scene:remove_shot(self)
+				else
+					self.x += self.dx
+				end
+			end,
+			draw = function(self)
+				line(self.x, self.y, self.x+self.width, self.y, self.color)
+			end
+		}
+		scene:add_shot(shot)
 	end,
 	init = function(self)
 		cam:set_scene(self)
