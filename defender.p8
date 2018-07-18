@@ -88,10 +88,6 @@ function make_ship(options)
 				self.shot_delay -= 1
 			end
 		end,
-		remove = function(self)
-			del(ships, self)
-			del(objects, self)
-		end,
 		check_hit = function(self, object)
 			self.hit = test_collision(self, object)
 			if (self.hit) then
