@@ -38,7 +38,6 @@ function test_collision(a, b)
 	)
 end
 
-ships = {}
 function make_ship(options)
 	local baseline_dy = 0.5
 	local ship_ddy = 0.1
@@ -196,8 +195,6 @@ function make_ship(options)
 			-- print(self.hp, self.x, self.y - 8)
 		end
 	}
-	add(ships, ship)
-	add(objects, ship)
 	return ship
 end
 
@@ -237,7 +234,7 @@ function make_player_ship(scene)
 end
 
 function make_bad_ship(player_ship, scene)
-	local bad_ship = make_ship({ 
+	return make_ship({ 
 		x = rnd(scene.width),
 		y = rnd(scene.height),
 		scene = scene,
@@ -382,21 +379,6 @@ function make_shot(options)
 	add(objects, shot)
 end
 
-function check_hits()
-	for shot in all(shots) do
-		for ship in all(ships) do
-			if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
-				shot:remove()
-				if (ship.hp == 0 ) then
-					make_explosion(ship.x + ship.width / 2, ship.y + ship.height / 2)
-					del(ships, ship)
-					del(objects, ship)
-				end
-			end
-		end
-	end
-end
-
 cam = {
 	x = 0,
 	y = 0,
@@ -500,7 +482,7 @@ function make_mini_map(scene)
 		draw = function(self)
 			rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 0)
 
-			for ship in all(ships) do
+			for ship in all(scene.ships) do
 				local ship_x = ship.x * (self.width / scene.width)
 				local ship_y = ship.y * (self.height / scene.height)
 				pset(self.x + ship_x, self.y + ship_y, ship.indicator_color)
@@ -521,22 +503,52 @@ local title = {
 }
 
 game_scene = {
+	ships = {},
 	height = screen_height + half_screen_height,
 	width = screen_width * 10,
+	add = function(self, object)
+		add(objects, object)
+	end,
+	remove = function(self, object)
+		del(objects, object)
+	end,
+	add_ship = function(self, ship)
+		add(self.ships, ship)
+		self:add(ship)
+	end,
+	remove_ship = function(self, ship)
+		del(self.ships, ship)
+		self:remove(ship)
+	end,
+	check_hits = function(self)
+		for shot in all(shots) do
+			for ship in all(self.ships) do
+				if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
+					shot:remove()
+					if (ship.hp == 0 ) then
+						make_explosion(ship.x + ship.width / 2, ship.y + ship.height / 2)
+						self:remove_ship(ship)
+					end
+				end
+			end
+		end
+	end,
 	init = function(self)
 		cam:set_scene(self)
 		local player_ship = make_player_ship(self)
+		self:add_ship(player_ship)
 		self.mini_map = make_mini_map(self)
 		local x_offset = flr(screen_width / 4)
 		player_ship.x = x_offset
 		cam:follow(player_ship, x_offset)
 		add_stars(player_ship, self)
 		for i = 0, 8 do
-			make_bad_ship(player_ship, self)
+			local bad_ship = make_bad_ship(player_ship, self)
+			self:add_ship(bad_ship)
 		end
 	end,
 	update = function(self)
-		check_hits()
+		self:check_hits()
 		for object in all(objects) do
 			object:update()
 		end
