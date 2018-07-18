@@ -314,12 +314,16 @@ function add_stars(track, scene)
 	local choose_y = function()
 		return rnd(scene.height)
 	end
+	local colors_by_distance = {7, 5, 1}
 
 	for i = 0, 50 + rnd(50) do
+		local distance = flr(rnd(3)) -- 0, 1, or 2 where 2 is the farthest
 		local star = {
 			x = -half_screen_width + rnd(screen_width * 2),
 			y = choose_y(),
-			width = 1,
+			distance = distance,
+			dx = (-distance + 2 + flr(rnd(2))) / 8,
+			color = colors_by_distance[1 + distance],
 			update = function(self)
 				local x_start = cam.x
 				local x_end = x_start + screen_width
@@ -330,10 +334,10 @@ function add_stars(track, scene)
 					self.x = x_start - rnd(half_screen_width)
 					self.y = choose_y()
 				end
-				self.width = min(2, track.dx)
+				self.x += (track.dx < 0 and self.dx or -self.dx)
 			end,
 			draw = function(self)
-				line(self.x, self.y, self.x + self.width, self.y, 7)
+				pset(self.x, self.y, self.color)
 			end
 		}
 		scene:add(star)
@@ -441,7 +445,7 @@ function make_mini_map(scene)
 		width = mini_map_width,
 		height = (mini_map_width * scene.height) / scene.width,
 		draw = function(self)
-			rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 0)
+			rectfill(self.x, self.y, self.x + self.width, self.y + self.height, 1)
 
 			for ship in all(scene.ships) do
 				local ship_x = ship.x * (self.width / scene.width)
@@ -556,7 +560,7 @@ game_scene = {
 		cam:update()
 	end,
 	draw = function(self)
-		cls(1)
+		cls(0)
 		camera() -- reset camera to draw the mini map in a fixed position
 		self.mini_map:draw()
 		cam:set()
