@@ -321,6 +321,7 @@ function add_stars(track, scene)
 		local star = {
 			x = -half_screen_width + rnd(screen_width * 2),
 			y = choose_y(),
+			width = 1,
 			distance = distance,
 			dx = (-distance + 2 + flr(rnd(2))) / 8,
 			color = colors_by_distance[1 + distance],
