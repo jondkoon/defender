@@ -106,22 +106,26 @@ function make_ship(options)
 			self.y += self.dy
 			self.x += self.dx
 			
+			local bump = false
 			if (self.y > self.scene.height - self.height) then
 				self.dy = max(-3, self.dy * -1)
 				self.y = self.scene.height - self.height
-				cam:shake()
+				bump = true
 			elseif (self.y < 0) then
 				self.dy = min(3, self.dy * -1)
 				self.y = 0
-				cam:shake()
+				bump = true
 			end
 			if (self.x > self.scene.width - self.width) then
 				self.dx = max(-3, self.dx * -1)
 				self.x = self.scene.width - self.width
-				cam:shake()
+				bump = true
 			elseif (self.x < 0) then
 				self.dx = min(3, self.dx * -1)
 				self.x = 0
+				bump = true
+			end
+			if (bump and self.is_player_ship) then
 				cam:shake()
 			end
 			if (self.fired) then
