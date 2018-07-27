@@ -289,7 +289,7 @@ function make_bad_ship(player_ship, scene)
 			end
 
 			if (rnd(1) > 0.5) then
-				-- self:fire()
+				self:fire()
 			end
 		end	
 	})
@@ -510,13 +510,16 @@ function make_scene(options)
 		check_hits = function(self)
 			for shot in all(self.shots) do
 				for ship in all(self.ships) do
-					if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
-						self:remove_shot(shot)
+					if (not shot.hit and ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
+						shot.hit = true
 						if (ship.hp == 0 ) then
 							make_explosion(self, ship.x + ship.width / 2, ship.y + ship.height / 2)
 							self:remove_ship(ship)
 						end
 					end
+				end
+				if (shot.hit) then
+					self:remove_shot(shot)
 				end
 			end
 		end,
