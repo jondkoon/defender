@@ -109,9 +109,20 @@ function make_ship(options)
 			if (self.y > self.scene.height - self.height) then
 				self.dy = max(-3, self.dy * -1)
 				self.y = self.scene.height - self.height
+				cam:shake()
 			elseif (self.y < 0) then
 				self.dy = min(3, self.dy * -1)
 				self.y = 0
+				cam:shake()
+			end
+			if (self.x > self.scene.width - self.width) then
+				self.dx = max(-3, self.dx * -1)
+				self.x = self.scene.width - self.width
+				cam:shake()
+			elseif (self.x < 0) then
+				self.dx = min(3, self.dx * -1)
+				self.x = 0
+				cam:shake()
 			end
 			if (self.fired) then
 				self.scene:make_shot({
@@ -355,6 +366,7 @@ cam = {
 	max_y = 0,
 	set_scene = function(self, scene)
 		self.scene = scene
+		self.min_x = 0
 		self.max_x = scene.width - screen_width
 		self.max_y = scene.height - screen_height
 	end,
@@ -368,21 +380,6 @@ cam = {
 	end,
 	in_view_x = function(self, x)
 		return x >= self.x and x <= self.x + screen_width
-	end,
-	update_screen_wrap = function(self)
-		if (self.x > self.max_x) then
-			self.x = self.x  - self.max_x
-		elseif (self.x < 0) then
-			self.x = self.x + self.max_x
-		end
-		for o in all(self.scene.objects) do
-			if (self:in_view_x(o.x - self.max_x) or self:in_view_x(o.x + o.width - self.max_x)) then
-				o.x = o.x - self.max_x
-			end
-			if (self:in_view_x(o.x + self.max_x) or self:in_view_x(o.x + o.width + self.max_x)) then
-				o.x = o.x + self.max_x
-			end
-		end
 	end,
 	update_shake = function(self)
 		if (self.shake_counter > 0) then
@@ -401,6 +398,12 @@ cam = {
 		local desired_x = self.following.x - self.follow_x_offset
 		if (self.following.dx < 0) then
 			desired_x = self.following.x - screen_width + self.follow_x_offset + self.following.width
+		end
+
+		if (desired_x < self.min_x) then
+			desired_x = self.min_x
+		elseif (desired_x > self.max_x) then
+			desired_x = self.max_x
 		end
 
 		local diff = self.x - desired_x
@@ -428,8 +431,6 @@ cam = {
 		elseif(self.y > self.max_y) then
 			self.y = self.max_y
 		end
-
-		self:update_screen_wrap()
 	end,
 	x_offset = function(self)
 		return self.following and flr(self.following.dx * 2) or 0
@@ -461,11 +462,18 @@ end
 
 function make_scene(options)
 	return {
-		objects = {},
-		ships = {},
-		shots = {},
 		height = options.height,
 		width = options.width,
+		init = function(self)
+			cam:set_scene(self)
+			if (options.with_mini_map) then
+				self.mini_map = make_mini_map(self)
+			end
+			self.objects = {}
+			self.ships = {}
+			self.shots = {}
+			options.init(self)
+		end,
 		add = function(self, object)
 			if (object.init) then
 				object:init()
@@ -533,13 +541,6 @@ function make_scene(options)
 				end
 			}
 			scene:add_shot(shot)
-		end,
-		init = function(self)
-			cam:set_scene(self)
-			if (options.with_mini_map) then
-				self.mini_map = make_mini_map(self)
-			end
-			options.init(self)
 		end,
 		update = function(self)
 			self:check_hits()
