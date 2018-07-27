@@ -232,8 +232,9 @@ function make_player_ship(scene)
 end
 
 function make_bad_ship(player_ship, scene)
-	return make_ship({ 
-		x = rnd(scene.width),
+	local x_start_offset = screen_width
+	return make_ship({
+		x = x_start_offset + rnd(scene.width - x_start_offset),
 		y = rnd(scene.height),
 		scene = scene,
 		dx = 0.5,
@@ -458,121 +459,192 @@ function make_mini_map(scene)
 	return mini_map
 end
 
+function make_scene(options)
+	return {
+		objects = {},
+		ships = {},
+		shots = {},
+		height = options.height,
+		width = options.width,
+		add = function(self, object)
+			if (object.init) then
+				object:init()
+			end
+			add(self.objects, object)
+		end,
+		remove = function(self, object)
+			del(self.objects, object)
+		end,
+		add_shot = function(self, shot)
+			add(self.shots, shot)
+			self:add(shot)
+		end,
+		remove_shot = function(self, shot)
+			del(self.shots, shot)
+			self:remove(shot)
+		end,
+		add_ship = function(self, ship)
+			add(self.ships, ship)
+			self:add(ship)
+		end,
+		remove_ship = function(self, ship)
+			del(self.ships, ship)
+			self:remove(ship)
+		end,
+		check_hits = function(self)
+			for shot in all(self.shots) do
+				for ship in all(self.ships) do
+					if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
+						self:remove_shot(shot)
+						if (ship.hp == 0 ) then
+							make_explosion(self, ship.x + ship.width / 2, ship.y + ship.height / 2)
+							self:remove_ship(ship)
+						end
+					end
+				end
+			end
+		end,
+		make_shot = function(scene, options)
+			sfx(0)
+			local width = 5 + rnd(10)
+			local shot = {
+				new = true,
+				from_player = options.from_player,
+				color = options.color,
+				x = options.dx < 0 and options.x - width or options.x,
+				y = options.y,
+				dx = options.dx < 0 and options.dx - 5 or options.dx + 5,
+				width = width,
+				height = 1,
+				update = function(self)
+					if (self.new) then
+						self.new = false
+						return
+					end
+
+					if (not cam:in_view_x(self.x)) then
+						scene:remove_shot(self)
+					else
+						self.x += self.dx
+					end
+				end,
+				draw = function(self)
+					line(self.x, self.y, self.x+self.width, self.y, self.color)
+				end
+			}
+			scene:add_shot(shot)
+		end,
+		init = function(self)
+			cam:set_scene(self)
+			if (options.with_mini_map) then
+				self.mini_map = make_mini_map(self)
+			end
+			options.init(self)
+		end,
+		update = function(self)
+			self:check_hits()
+			for object in all(self.objects) do
+				object:update()
+			end
+			cam:update()
+			if (options.update) then
+				options.update(self)
+			end
+		end,
+		draw = function(self)
+			cls(0)
+			if (self.mini_map) then
+				camera() -- reset camera to draw the mini map in a fixed position
+				self.mini_map:draw()
+			end
+			cam:set()
+			for object in all(self.objects) do
+				object:draw()
+			end
+			if (options.draw) then
+				options.draw(self)
+			end
+		end
+	}
+end
+
+function change_scene(scene)
+	scene:init()
+	current_scene = scene
+end
+
+game_scene = make_scene({
+	height = screen_height + half_screen_height,
+	width = screen_width * 10,
+	with_mini_map = true,
+	init = function(self)
+		local player_ship = make_player_ship(self)
+		add_stars(player_ship, self)
+		self:add_ship(player_ship)
+		local x_offset = flr(screen_width / 4)
+		player_ship.x = x_offset
+		cam:follow(player_ship, x_offset)
+		for i = 0, 8 do
+			local bad_ship = make_bad_ship(player_ship, self)
+			self:add_ship(bad_ship)
+		end
+	end
+})
+
 local title = {
 	x = 18,
-	y = 8,
+	y = 20,
 	width = 11 * 8,
 	height = 5 * 8,
+	update = function(self)
+	end,
 	draw = function(self)
 		spr(181, self.x, self.y, self.width / 8, self.height / 8)
 	end
 }
 
-game_scene = {
-	objects = {},
-	ships = {},
-	shots = {},
-	height = screen_height + half_screen_height,
-	width = screen_width * 10,
-	add = function(self, object)
-		add(self.objects, object)
-	end,
-	remove = function(self, object)
-		del(self.objects, object)
-	end,
-	add_shot = function(self, shot)
-		add(self.shots, shot)
-		self:add(shot)
-	end,
-	remove_shot = function(self, shot)
-		del(self.shots, shot)
-		self:remove(shot)
-	end,
-	add_ship = function(self, ship)
-		add(self.ships, ship)
-		self:add(ship)
-	end,
-	remove_ship = function(self, ship)
-		del(self.ships, ship)
-		self:remove(ship)
-	end,
-	check_hits = function(self)
-		for shot in all(self.shots) do
-			for ship in all(self.ships) do
-				if (ship.is_player_ship != shot.from_player and ship:check_hit(shot)) then
-					self:remove_shot(shot)
-					if (ship.hp == 0 ) then
-						make_explosion(self, ship.x + ship.width / 2, ship.y + ship.height / 2)
-						self:remove_ship(ship)
-					end
-				end
-			end
-		end
-	end,
-	make_shot = function(scene, options)
-		sfx(0)
-		local width = 5 + rnd(10)
-		local shot = {
-			new = true,
-			from_player = options.from_player,
-			color = options.color,
-			x = options.dx < 0 and options.x - width or options.x,
-			y = options.y,
-			dx = options.dx < 0 and options.dx - 5 or options.dx + 5,
-			width = width,
-			height = 1,
-			update = function(self)
-				if (self.new) then
-					self.new = false
-					return
-				end
 
-				if (not cam:in_view_x(self.x)) then
-					scene:remove_shot(self)
-				else
-					self.x += self.dx
-				end
-			end,
-			draw = function(self)
-				line(self.x, self.y, self.x+self.width, self.y, self.color)
-			end
-		}
-		scene:add_shot(shot)
-	end,
+local start_prompt = {
+	y = title.y + title.height + 20,
+	height = 4,
 	init = function(self)
-		cam:set_scene(self)
-		local player_ship = make_player_ship(self)
-		self:add_ship(player_ship)
-		self.mini_map = make_mini_map(self)
-		local x_offset = flr(screen_width / 4)
-		player_ship.x = x_offset
-		cam:follow(player_ship, x_offset)
-		add_stars(player_ship, self)
-		for i = 0, 8 do
-			local bad_ship = make_bad_ship(player_ship, self)
-			self:add_ship(bad_ship)
-		end
+		self.text = "press ❎ or 🅾️ to start"
+		self.width = (#self.text + 2) * 4
+		self.x = (screen_width - self.width) / 2
+		self.timer = 60
 	end,
 	update = function(self)
-		self:check_hits()
-		for object in all(self.objects) do
-			object:update()
+		self.timer -= 1
+		if (self.timer < -20) then
+			self.timer = 60
 		end
-		cam:update()
+		if (btn(4) or btn(5)) then
+			change_scene(game_scene)
+		end
 	end,
 	draw = function(self)
-		cls(0)
-		camera() -- reset camera to draw the mini map in a fixed position
-		self.mini_map:draw()
-		cam:set()
-		for object in all(self.objects) do
-			object:draw()
+		if (self.timer > 0) then
+			print(self.text, self.x, self.y, 7)
 		end
 	end
 }
 
+title_scene = make_scene({
+	height = screen_height,
+	width = screen_width,
+	init = function(self)
+		add_stars({
+			dx = 2
+		}, self)
+		self:add(title)
+		self:add(start_prompt)
+	end
+})
+
+current_scene = title_scene
+
 function _init()
-	game_scene:init()
+	current_scene:init()
 end
 
 function _update60()
@@ -580,7 +652,7 @@ function _update60()
 		return
 	end
 
-	game_scene:update()
+	current_scene:update()
 end
 
 function _draw()
@@ -588,7 +660,7 @@ function _draw()
 		return
 	end
 
-	game_scene:draw()
+	current_scene:draw()
 end
 __gfx__
 00000000066600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -695,8 +767,8 @@ __gfx__
 00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222000000000002222200222228000
 00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222000000000002222200022222800
 00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222000000000002222200002222280
-00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222888888880002222200002222220
-00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222222222228002222200000222228
+00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222888888888002222200002222220
+00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222222222222002222200000222228
 00000000000000000000000000000000000000000000222220000000222220000000222200000000222220000000000022222222222222002222200000022222
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000888800000000088800000000888888888800000088888000000000008880000888000000000000
@@ -705,16 +777,16 @@ __gfx__
 00000000000000000000000000000000000000000000000000222228000000022200008222220000002222280002222200000000822200082222200000000000
 00000000000000000000000000000000000000000000000000222222800000022200082222200000000222220002222280000000222000022222280000000000
 00000000000000000000000000000000000000000000000000222222280000022200022222000000000222228000222220000008222000022222220000000000
-00000000000000000000000000000000000000000000000000222222228000022200022222000000000022222000222228000002222000822222228000000000
-00000000000000000000000000000000000000000000000000222022222800022200822222000000000022222000022222000002220000222022222000000000
+00000000000000000000000000000000000000000000000000222222228000022200822222000000000022222000222228000002222000822222228000000000
+00000000000000000000000000000000000000000000000000222022222800022200222222000000000022222000022222000002220000222022222000000000
 00000000000000000000000000000000000000000000000000222022222280022200222222000000000022222000022222000082220008222022222800000000
-00000000000000000000000000000000000000000000000000222002222228022200222220000000000022222000002222800022200002220002222200000000
-00000000000000000000000000000000000000000000000000222000222222822200222228000000000022222000002222200822200082220002222280000000
+00000000000000000000000000000000000000000000000000222002222228022200222222000000000022222000002222800022200002220002222200000000
+00000000000000000000000000000000000000000000000000222000222222822200222222000000000022222000002222200822200082220002222280000000
 00000000000000000000000000000000000000000000000000222000022222222200222222000000000022222000000222280222000022228888222220000000
 00000000000000000000000000000000000000000000000000222000002222222200022222000000000022222000000222228222000822222222222220000000
 00000000000000000000000000000000000000000000000000222000000222222200022222000000000822222000000222222220000222200000022228000000
 00000000000000000000000000000000000000000000000000222000000022222200022222800000000222220000000022222220008222000000022222000000
-00000000000000000000000000000000000000000000000000222000000002222200002222200000008222220000000022222220002222000000002222800000
+00000000000000000000000000000000000000000000000000222000000022222200002222200000008222220000000022222220002222000000002222800000
 00000000000000000000000000000000000000000000000000222000000002222200000222288000082222200000000002222200082220000000002222200000
 00000000000000000000000000000000000000000000000000222000000000222200000022222888822222000000000002222200022220000000000222280000
 00000000000000000000000000000000000000000000000000222000000000022200000002222222222200000000000000222000022200000000000222220000
@@ -724,3 +796,11 @@ __sfx__
 011400001c44300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030020300203002030000300000
 011400001c4731c445004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403004030040300403
 010500002d6622d6622d6622c6622a652256521f652176520b6220360200602006020060200602006020060200602006020060200602006020060200602006020060200602006020060200602006020000200002
+011200000c033000000000000000186350000000000000000c033000000000000000186350c63518635246350c033000000000000000186350000000000000000c033000000000000000186350c6351863534635
+011200001872518725247251872518725187251a720187201a725007051a725187051a7251a7051a725187051a725187251a725187251a725187251a725187251a725187051a725187051a7251a7051a72500705
+0110000024720247202472024720247202672026720267202972029720297202872029720287202b7202b72024720247202472024720247202672026720267202972029720297202872029720287202b7202b720
+__music__
+00 04464644
+00 04054344
+00 04054644
+
