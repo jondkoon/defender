@@ -278,6 +278,9 @@ function make_bad_ship(player_ship, scene)
 			end
 
 			local desired_x = (player_ship.x + player_ship.dx) - 20
+			if (self.x > player_ship.x) then
+				desired_x += 40
+			end
 			local x_diff = (self.x + self.dx) - desired_x
 			if(x_diff > 10) then
 				self:go_left()
@@ -286,7 +289,7 @@ function make_bad_ship(player_ship, scene)
 			end
 
 			if (rnd(1) > 0.5) then
-				self:fire()
+				-- self:fire()
 			end
 		end	
 	})
