@@ -369,6 +369,7 @@ cam = {
 		self.min_x = 0
 		self.max_x = scene.width - screen_width
 		self.max_y = scene.height - screen_height
+		self.min_y = scene.mini_map and -scene.mini_map.height or 0
 	end,
 	shake_counter = 0,
 	shake = function(self)
@@ -426,8 +427,8 @@ cam = {
 		self:update_shake()
 		self:update_follow()
 
-		if (self.y < 0) then
-			self.y = 0
+		if (self.y < self.min_y) then
+			self.y = self.min_y
 		elseif(self.y > self.max_y) then
 			self.y = self.max_y
 		end
@@ -465,10 +466,10 @@ function make_scene(options)
 		height = options.height,
 		width = options.width,
 		init = function(self)
-			cam:set_scene(self)
 			if (options.with_mini_map) then
 				self.mini_map = make_mini_map(self)
 			end
+			cam:set_scene(self)
 			self.objects = {}
 			self.ships = {}
 			self.shots = {}
