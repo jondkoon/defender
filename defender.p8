@@ -17,6 +17,13 @@ function sfx(id)
 	end
 end
 
+_music = music
+function music(id)
+	if (sound_on) then
+		_music(id)
+	end
+end
+
 function draw_hit_box(o)
 	rect(o.x, o.y, o.x + o.width, o.y + o.height, 11)
 end
@@ -472,6 +479,7 @@ function make_scene(options)
 	return {
 		height = options.height,
 		width = options.width,
+		music = options.music,
 		init = function(self)
 			if (options.with_mini_map) then
 				self.mini_map = make_mini_map(self)
@@ -480,6 +488,11 @@ function make_scene(options)
 			self.objects = {}
 			self.ships = {}
 			self.shots = {}
+			if (self.music) then
+				music(self.music)
+			else
+				music(-1)
+			end
 			options.init(self)
 		end,
 		add = function(self, object)
@@ -588,6 +601,7 @@ end
 game_scene = make_scene({
 	height = screen_height + half_screen_height,
 	width = screen_width * 10,
+	music = 0,
 	with_mini_map = true,
 	init = function(self)
 		local player_ship = make_player_ship(self)
@@ -640,10 +654,11 @@ local start_prompt = {
 		end
 	end
 }
-music(5)
+
 title_scene = make_scene({
 	height = screen_height,
 	width = screen_width,
+	music = 5,
 	init = function(self)
 		add_stars({
 			dx = 2
@@ -817,7 +832,7 @@ __sfx__
 011c00200177001770017700176001760017500174001740017300173001720017100000000000000000000001770017700177001760017600175001740017400173001730017200171000000000000000000000
 011200180f655006050f6050f6550f6550f6550f65500605006050f6550f6550f6550f6550f605006050f6550f6550f6550f655006000f6000f6550f6050f6050f60500605006050060500605006050060500605
 011c00100d250102501425017250152001725010250102001025013250172501a2501e2001a250132500020000200002000020000200002000020000200002000020000200002000020000200002000020000200
-01381020297502975029750297502975029750297002970011750117501175011750117501175011700197002975029750297502975029750297501170029750297512d7512d7512d7512d7512d7510070000700
+01381020297502975029740297302972029710297002970011750117501174011730117201171011700197002975029750297402973029720297101170029750297512d7512d7412d7312d7212d7110070000700
 __music__
 00 04464644
 00 04054344
